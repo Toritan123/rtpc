@@ -1,0 +1,712 @@
+.include "include/beatscript.inc"
+.include "games/drum_studio/macros.inc"
+
+
+
+.section .script.entry
+@ Drum Lesson (Hi-Tech 2) - Script Entry Point
+
+script script_drum_lesson_hi_tech_2_entry
+    set_tempo 124
+    rest 24
+    rest 24
+    load_drum_lessons
+    enable_play_inputs
+    start_tracking_inputs
+    call script_drum_lesson_hi_tech_2_main
+    disable_pause_menu
+    disable_play_inputs
+    fade_music_out 48
+    fade_screen_out 12, BLACK
+    rest 24
+    rest 24
+stop
+
+define_gameplay_scene scene_drum_lesson_hi_tech_2, script_drum_lesson_hi_tech_2_entry
+
+
+
+.section .rodata
+@ Drum Lesson (Hi-Tech 2) - Data
+
+text D_08065f9c
+    .ascii "\n"
+    .ascii "まずは、おさらいです。\n"
+    .asciz "がんばってネ！"
+endtext
+
+
+script D_08065fc4
+    spawn_cue CUE_SNARE_L
+    rest 6
+    rest 6
+    spawn_cue CUE_HIHAT
+    rest 6
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    rest 6
+    spawn_cue CUE_HIHAT
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+    rest 6
+    spawn_cue CUE_HIHAT
+    rest 6
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    rest 6
+    spawn_cue CUE_HIHAT
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+    rest 6
+    spawn_cue CUE_HIHAT
+    rest 6
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    rest 6
+    spawn_cue CUE_HIHAT
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+    rest 6
+    spawn_cue CUE_HIHAT
+    rest 6
+    rest 6
+return
+
+
+script D_080661ec
+    spawn_cue CUE_KICK_R
+    spawn_cue CUE_CRASH
+    rest 6
+    rest 6
+    spawn_cue CUE_HIHAT
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 3
+return
+
+
+text D_08066258
+    .ascii "\n"
+    .ascii "ここからが勝負です！\n"
+    .ascii "よ～くきいて、\n"
+    .asciz "ちゃんとマネしてネ！\n"
+endtext
+
+
+script D_08066294
+    spawn_cue CUE_SNARE_L
+    rest 6
+    rest 6
+    spawn_cue CUE_HIHAT
+    rest 6
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    rest 6
+    spawn_cue CUE_HIHAT
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+    spawn_cue CUE_KICK_R
+    spawn_cue CUE_CRASH
+    rest 6
+    rest 6
+    rest 6
+    spawn_cue CUE_SNARE_R
+    rest 6
+    rest 6
+    rest 6
+    rest 6
+    rest 6
+    rest 6
+    rest 6
+    rest 6
+    rest 6
+    rest 6
+    rest 6
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    rest 6
+    spawn_cue CUE_SNARE_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+return
+
+
+text D_08066480
+    .ascii "\n"
+    .ascii "バスとスネアを\n"
+    .ascii "ちょっと　たすヨ！\n"
+    .asciz "できるかな？"
+endtext
+
+
+script D_080664b0
+    spawn_cue CUE_SNARE_L
+    rest 6
+    rest 6
+    spawn_cue CUE_HIHAT
+    rest 6
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    rest 6
+    spawn_cue CUE_HIHAT
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+    spawn_cue CUE_KICK_R
+    spawn_cue CUE_CRASH
+    rest 6
+    rest 6
+    rest 6
+    spawn_cue CUE_SNARE_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+    rest 6
+    rest 6
+    rest 6
+    rest 6
+    rest 6
+    rest 6
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    rest 6
+    spawn_cue CUE_SNARE_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+return
+
+
+text D_080666c0
+    .ascii "\n"
+    .ascii "バスドラムを１つ\n"
+    .ascii "ふやしてみるヨ。\n"
+    .asciz "がんばって！"
+endtext
+
+
+script D_080666f0
+    spawn_cue CUE_SNARE_L
+    rest 6
+    rest 6
+    spawn_cue CUE_HIHAT
+    rest 6
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    rest 6
+    spawn_cue CUE_HIHAT
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+    spawn_cue CUE_KICK_R
+    spawn_cue CUE_CRASH
+    rest 6
+    rest 6
+    rest 6
+    spawn_cue CUE_SNARE_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 3
+    spawn_cue CUE_KICK_L
+    rest 3
+    spawn_cue CUE_SNARE_R
+    rest 6
+    rest 6
+    rest 6
+    rest 6
+    rest 6
+    rest 6
+    rest 6
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    rest 6
+    spawn_cue CUE_SNARE_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+return
+
+
+text D_08066918
+    .ascii "さらに、またまた\n"
+    .ascii "バスとスネアを追加！！\n"
+    .ascii "キミならできる！\n"
+    .asciz "がんばれ～！！\n"
+endtext
+
+
+script D_08066964
+    spawn_cue CUE_SNARE_L
+    rest 6
+    rest 6
+    spawn_cue CUE_HIHAT
+    rest 6
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    rest 6
+    spawn_cue CUE_HIHAT
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+    spawn_cue CUE_KICK_R
+    spawn_cue CUE_CRASH
+    rest 6
+    rest 6
+    rest 6
+    spawn_cue CUE_SNARE_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 3
+    spawn_cue CUE_KICK_L
+    rest 3
+    spawn_cue CUE_SNARE_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    rest 6
+    rest 6
+    rest 6
+    rest 6
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    rest 6
+    spawn_cue CUE_SNARE_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+return
+
+
+text D_08066ba4
+    .ascii "\n"
+    .ascii "バスドラムを１つ\n"
+    .ascii "ふやしてみるヨ。\n"
+    .asciz "キメてネ！！"
+endtext
+
+
+script D_08066bd4
+    spawn_cue CUE_SNARE_L
+    rest 6
+    rest 6
+    spawn_cue CUE_HIHAT
+    rest 6
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    rest 6
+    spawn_cue CUE_HIHAT
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+    spawn_cue CUE_KICK_R
+    spawn_cue CUE_CRASH
+    rest 6
+    rest 6
+    rest 6
+    spawn_cue CUE_SNARE_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 3
+    spawn_cue CUE_KICK_L
+    rest 3
+    spawn_cue CUE_SNARE_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    spawn_cue CUE_KICK_L
+    rest 6
+    rest 6
+    rest 6
+    rest 6
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    rest 6
+    spawn_cue CUE_SNARE_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+return
+
+
+text D_08066e20
+    .ascii "さっきのバスドラに\n"
+    .ascii "シンバルをかさねるヨ！\n"
+    .ascii "これは、ムズイ！！\n"
+    .asciz "ファイトー！！"
+endtext
+
+
+script D_08066e6c
+    spawn_cue CUE_SNARE_L
+    rest 6
+    rest 6
+    spawn_cue CUE_HIHAT
+    rest 6
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    rest 6
+    spawn_cue CUE_HIHAT
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+    spawn_cue CUE_KICK_R
+    spawn_cue CUE_CRASH
+    rest 6
+    rest 6
+    rest 6
+    spawn_cue CUE_SNARE_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 3
+    spawn_cue CUE_KICK_L
+    rest 3
+    spawn_cue CUE_SNARE_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    spawn_cue CUE_KICK_L
+    spawn_cue CUE_SPLASH
+    rest 6
+    rest 6
+    rest 6
+    rest 6
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    rest 6
+    spawn_cue CUE_SNARE_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+return
+
+
+text D_080670c4
+    .ascii "\n"
+    .ascii "これまたムズイところに\n"
+    .ascii "スネアを１つ追加！！\n"
+    .asciz "もう、いくしかない！！！"
+endtext
+
+
+script D_0806710c
+    spawn_cue CUE_SNARE_L
+    rest 6
+    rest 6
+    spawn_cue CUE_HIHAT
+    rest 6
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    rest 6
+    spawn_cue CUE_HIHAT
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+    spawn_cue CUE_KICK_R
+    spawn_cue CUE_CRASH
+    rest 6
+    rest 6
+    rest 6
+    spawn_cue CUE_SNARE_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 3
+    spawn_cue CUE_KICK_L
+    rest 3
+    spawn_cue CUE_SNARE_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    spawn_cue CUE_KICK_L
+    spawn_cue CUE_SPLASH
+    rest 6
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+    rest 6
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    rest 6
+    spawn_cue CUE_SNARE_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+return
+
+
+text D_08067370
+    .ascii "これで　さいご！\n"
+    .ascii "タムを１つ追加するヨ！\n"
+    .ascii "流れるようなイカした\n"
+    .asciz "プレイをよろしくです！！"
+endtext
+
+
+script D_080673c8
+    spawn_cue CUE_SNARE_L
+    rest 6
+    rest 6
+    spawn_cue CUE_HIHAT
+    rest 6
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    rest 6
+    spawn_cue CUE_HIHAT
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+    spawn_cue CUE_KICK_R
+    spawn_cue CUE_CRASH
+    rest 6
+    rest 6
+    rest 6
+    spawn_cue CUE_SNARE_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 3
+    spawn_cue CUE_KICK_L
+    rest 3
+    spawn_cue CUE_SNARE_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    spawn_cue CUE_KICK_L
+    spawn_cue CUE_SPLASH
+    rest 6
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+    rest 6
+    spawn_cue CUE_TOM
+    rest 6
+    spawn_cue CUE_KICK_R
+    rest 6
+    rest 6
+    spawn_cue CUE_SNARE_R
+    rest 6
+    spawn_cue CUE_SNARE_L
+    rest 6
+return
+
+
+text D_08067638
+    .ascii "\n"
+    .ascii "今回は、\n"
+    .ascii "１つ前のレッスンを\n"
+    .asciz "応用してみます。"
+endtext
+
+
+text D_08067668
+    .ascii "\n"
+    .ascii "１つ前のレッスンを\n"
+    .ascii "クリアしてから、\n"
+    .asciz "挑戦してネ！"
+endtext
+
+
+text D_0806769c
+    .ascii "\n"
+    .asciz "では、はじめまーす！"
+endtext
+
+
+
+.section .script.main
+@ Drum Lesson (Hi-Tech 2) - Tables
+
+struct D_08a437b4
+    .word D_080661ec
+    .word D_08065fc4
+    .word s_hakushu_solo_seqData
+    .word D_08065f9c
+endstruct
+
+struct D_08a437c4
+    .word D_080661ec
+    .word D_08066294
+    .word s_hakushu_solo_seqData
+    .word D_08066258
+endstruct
+
+struct D_08a437d4
+    .word D_080661ec
+    .word D_080664b0
+    .word s_warai_little_seqData
+    .word D_08066480
+endstruct
+
+struct D_08a437e4
+    .word D_080661ec
+    .word D_080666f0
+    .word s_warai_seqData
+    .word D_080666c0
+endstruct
+
+struct D_08a437f4
+    .word D_080661ec
+    .word D_08066964
+    .word s_kansei_solo_seqData
+    .word D_08066918
+endstruct
+
+struct D_08a43804
+    .word D_080661ec
+    .word D_08066bd4
+    .word s_kansei_seqData
+    .word D_08066ba4
+endstruct
+
+struct D_08a43814
+    .word D_080661ec
+    .word D_08066e6c
+    .word s_kansei_seqData
+    .word D_08066e20
+endstruct
+
+struct D_08a43824
+    .word D_080661ec
+    .word D_0806710c
+    .word s_kansei_seqData
+    .word D_080670c4
+endstruct
+
+struct D_08a43834
+    .word D_080661ec
+    .word D_080673c8
+    .word s_kansei_seqData
+    .word D_08067370
+endstruct
+
+
+
+@ Drum Lesson (Hi-Tech 2) - Main Script
+
+script script_drum_lesson_hi_tech_2_main
+    set_tempo 110
+    set_music_volume 256
+    stop_tracking_inputs
+    dms_event08 4
+    dms_event09 1
+    rest 24
+    rest 24
+    dms_event02 TRUE
+    rest 24
+    dms_set_dialogue_text D_08067638
+    rest 12
+    dms_event15
+    dms_event16
+    rest 12
+    dms_set_dialogue_text D_08067668
+    rest 12
+    dms_event15
+    dms_event16
+    rest 12
+    dms_set_dialogue_text D_0806769c
+    rest 12
+    dms_event15
+    dms_event16
+    rest 12
+    rest 24
+    run drum_lesson_script_import_pattern, D_08a437b4
+    call drum_lessons_sub_08a7d7a0
+    run drum_lesson_script_import_pattern, D_08a437c4
+    call drum_lessons_sub_08a7d7a0
+    run drum_lesson_script_import_pattern, D_08a437d4
+    call drum_lessons_sub_08a7d7a0
+    run drum_lesson_script_import_pattern, D_08a437e4
+    call drum_lessons_sub_08a7d7a0
+    run drum_lesson_script_import_pattern, D_08a437f4
+    call drum_lessons_sub_08a7d7a0
+    run drum_lesson_script_import_pattern, D_08a43804
+    call drum_lessons_sub_08a7d7a0
+    run drum_lesson_script_import_pattern, D_08a43814
+    call drum_lessons_sub_08a7d7a0
+    run drum_lesson_script_import_pattern, D_08a43824
+    call drum_lessons_sub_08a7d7a0
+    start_tracking_inputs
+    run drum_lesson_script_import_pattern, D_08a43834
+    call drum_lessons_sub_08a7d7a0
+    dms_show_dialogue TRUE
+    dms_set_teacher_exp TEACHER_EXP_GIVE_RANK
+    dms_get_lesson_score
+return
+
+.end

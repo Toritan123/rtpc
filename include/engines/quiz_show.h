@@ -1,0 +1,128 @@
+#pragma once
+
+#include "global.h"
+#include "engines.h"
+#include "graphics.h"
+
+#include "games/quiz_show/graphics/quiz_show_graphics.h"
+
+// Engine Macros/Enums:
+enum QuizShowVersionsEnum {
+    QUIZ_SHOW_VER_0,
+    QUIZ_SHOW_VER_ENDLESS
+};
+
+enum QuizShowCharactersEnum {
+    QUIZ_SHOW_CHAR_HOST,
+    QUIZ_SHOW_CHAR_PLAYER
+};
+
+enum QuizShowHostArmsEnum {
+    QUIZ_SHOW_HOST_ARM_RIGHT,
+    QUIZ_SHOW_HOST_ARM_LEFT
+};
+
+
+// Engine Types:
+
+struct QuizShowCharacter {
+    s16 body; // 0x0
+    s16 head; // 0x2
+    s16 rightArm; // 0x4
+    s16 leftArm; // 0x6
+    s16 leftButton; // 0x8
+    s16 rightButton; // 0xa
+    s16 digit1; // 0xc
+    s16 digit2; // 0xe
+    s16 count; // 0x10
+    u16 unk_12; // 0x12  padding: quiz_show_engine_start puts the player's
+                // sprites at 0x1C, so the struct is 0x14 bytes
+};
+
+struct QuizShowEngineData {
+    u8 version;
+    struct TextPrinter *textPrinter;
+    struct QuizShowCharacter host;
+    struct QuizShowCharacter player;
+    s16 unk_30;
+    struct AffineSprite *unk_34;
+    u32 unk_38;
+    u32 unk_3c;
+    struct QuizShowScriptTable *unk_40;
+    u16 unk_44;
+    u16 unk_46;
+    u8 unk_48;
+    u8 unk_49;
+    u16 unk4a;
+    u16 unk4c;
+    s16 scoreSprites[2];
+    s16 highscoreSprites[2];
+};
+
+struct QuizShowCue {
+    /* add fields here */
+};
+
+struct QuizShowScriptTable {
+    struct Beatscript *scriptA;
+    struct Beatscript *scriptB;
+    struct QuizShowScriptTable **scriptTable;
+};
+
+
+// Engine Definition Data:
+extern struct CompressedData *quiz_show_buffered_textures[];
+extern struct GraphicsTable quiz_show_gfx_table[];
+extern struct Animation *quiz_show_arm_r_anim[];
+extern struct Animation *quiz_show_arm_l_anim[];
+extern struct Animation *quiz_show_face_neutral_anim[];
+extern struct Animation *quiz_show_face_success_anim[];
+extern struct Animation *quiz_show_face_failure_anim[];
+extern struct Animation *quiz_show_host_button_press_anim[];
+extern struct Animation *quiz_show_endless_host_face_anim[];
+extern struct Animation *quiz_show_endless_player_face_anim[];
+extern struct GameEngine quiz_show_engine;
+
+
+// Functions:
+// extern ? func_0803709c(?);
+extern void func_08037178(void);
+extern void func_08037280(); // Engine Event 0F (?)
+extern void func_080372c0(); // Engine Event 10 (?)
+extern void func_080372e8(void);
+// extern ? func_08037378(?);
+extern void func_080373ac(); // Engine Event 05 (?)
+extern void func_080373dc(); // Engine Event 06 (?)
+extern void quiz_show_init_gfx3(void); // Graphics Init. 3
+extern void quiz_show_init_gfx2(void); // Graphics Init. 2
+extern void quiz_show_init_gfx1(void); // Graphics Init. 1
+extern void quiz_show_engine_start(u32 version); // Game Engine Start
+extern void quiz_show_engine_event_stub(void); // Engine Event 11 (STUB)
+// extern ? func_0803785c(?);
+extern void func_080378d8(u32 arg0, s32 arg1);
+extern void func_08037a64(); // Engine Event 01 (?)
+// extern ? func_08037a78(?);
+extern void func_08037be0(); // Engine Event 00 (?)
+extern void func_08037bf4(); // Engine Event 02 (?)
+extern void func_08037cb8(); // Engine Event 03 (?)
+extern s32 func_08037cd0(); // Engine Event 04 (?)
+extern void quiz_show_engine_update(void); // Game Engine Update
+extern void func_08037d00(struct QuizShowScriptTable *arg0); // Engine Event 07 (?)
+extern struct Beatscript *func_08037d0c(void); // Engine Event 08 (?)
+extern struct Beatscript *func_08037d1c(void); // Engine Event 09 (?)
+extern void func_08037d2c(void); // Engine Event 0A (?)
+extern void func_08037d6c(u32 arg0); // Engine Event 0B (?)
+extern void func_08037d90(); // Engine Event 0C (?)
+extern void func_08037dc8(); // Engine Event 0D (?)
+extern void func_08037e24(); // Engine Event 0E (?)
+extern void quiz_show_engine_stop(void); // Game Engine Stop
+extern void quiz_show_cue_spawn(struct Cue *, struct QuizShowCue *, u32 param); // Cue - Spawn
+extern u32  quiz_show_cue_update(struct Cue *, struct QuizShowCue *, u32 runningTime, u32 duration); // Cue - Update
+extern void quiz_show_cue_despawn(struct Cue *, struct QuizShowCue *); // Cue - Despawn
+extern void quiz_show_cue_hit(struct Cue *, struct QuizShowCue *, u32 pressed, u32 released); // Cue - Hit
+extern void quiz_show_cue_barely(struct Cue *, struct QuizShowCue *, u32 pressed, u32 released); // Cue - Barely
+extern void quiz_show_cue_miss(struct Cue *, struct QuizShowCue *); // Cue - Miss
+extern void quiz_show_input_event(u32 pressed, u32 released); // Input Event
+extern void quiz_show_common_beat_animation(void); // Common Event 0 (Beat Animation, Unimplemented)
+extern void quiz_show_common_display_text(void); // Common Event 1 (Display Text, Unimplemented)
+extern void quiz_show_common_init_tutorial(struct Scene *); // Common Event 2 (Init. Tutorial)

@@ -1,0 +1,235 @@
+.include "include/beatscript.inc"
+.include "games/drum_studio/macros.inc"
+
+
+
+.section .script.entry
+@ Drum Lesson (Short 6) - Script Entry Point
+
+script script_drum_lesson_short_6_entry
+    set_tempo 124
+    rest 24
+    rest 24
+    load_drum_lessons
+    enable_play_inputs
+    start_tracking_inputs
+    call script_drum_lesson_short_6_main
+    disable_pause_menu
+    disable_play_inputs
+    fade_music_out 48
+    fade_screen_out 12, BLACK
+    rest 24
+    rest 24
+stop
+
+define_gameplay_scene scene_drum_lesson_short_6, script_drum_lesson_short_6_entry
+
+
+
+.section .rodata
+@ Drum Lesson (Short 6) - Data
+
+text D_08060fa0
+    .ascii "よくきいてマネしてね。\n"
+    .ascii "好きなタイミングでどうぞ。\n"
+    .ascii "演奏を止めると、\n"
+    .asciz "お手本がきけるヨ！"
+endtext
+
+
+script D_08060ff8
+    spawn_cue CUE_KICK_R
+    rest 24
+    spawn_cue CUE_KICK_R
+    rest 24
+    spawn_cue CUE_KICK_R
+    rest 24
+return
+
+
+script D_0806104c
+    spawn_cue CUE_KICK_R
+    rest 21
+return
+
+
+text D_08061070
+    .ascii "\n"
+    .ascii "１カ所、音がふえるヨ！\n"
+    .ascii "わかるかな？\n"
+    .asciz "ヒント：キックは前と同じ"
+endtext
+
+
+script D_080610b0
+    spawn_cue CUE_KICK_R
+    rest 24
+    spawn_cue CUE_KICK_R
+    rest 24
+    spawn_cue CUE_SNARE_L
+    spawn_cue CUE_KICK_R
+    rest 24
+return
+
+
+text D_08061110
+    .ascii "さらに１カ所、\n"
+    .ascii "音がふえるヨ！\n"
+    .ascii "わかるかな？\n"
+    .asciz "ヒント：キックは前と同じ"
+endtext
+
+
+script D_08061154
+    spawn_cue CUE_SNARE_L
+    spawn_cue CUE_KICK_R
+    rest 24
+    spawn_cue CUE_KICK_R
+    rest 24
+    spawn_cue CUE_SNARE_L
+    spawn_cue CUE_KICK_R
+    rest 24
+return
+
+
+text D_080611c0
+    .ascii "またまた１カ所、\n"
+    .ascii "音がふえるヨ！\n"
+    .ascii "わかるかな？\n"
+    .asciz "ヒント：十\字ボタン上"
+endtext
+
+
+script D_08061204
+    spawn_cue CUE_SNARE_L
+    spawn_cue CUE_KICK_R
+    rest 24
+    spawn_cue CUE_KICK_R
+    rest 12
+    spawn_cue CUE_HIHAT
+    rest 12
+    spawn_cue CUE_SNARE_L
+    spawn_cue CUE_KICK_R
+    rest 24
+return
+
+
+text D_08061288
+    .ascii "\n"
+    .ascii "そしてまたなんと！\n"
+    .ascii "１カ所、音がふえるヨ！\n"
+    .asciz "わかるかな？\n"
+endtext
+
+
+script D_080612c4
+    spawn_cue CUE_KICK_R
+    rest 12
+    spawn_cue CUE_HIHAT
+    rest 9
+return
+
+
+text D_08061300
+    .ascii "\n"
+    .ascii "これまたなんと！\n"
+    .ascii "ノリノリだヨ！\n"
+    .asciz "できるかな？\n"
+endtext
+
+
+script D_08061330
+    spawn_cue CUE_SNARE_L
+    spawn_cue CUE_KICK_R
+    rest 12
+    spawn_cue CUE_HIHAT
+    rest 12
+    spawn_cue CUE_KICK_R
+    rest 12
+    spawn_cue CUE_HIHAT
+    rest 12
+    spawn_cue CUE_SNARE_L
+    spawn_cue CUE_KICK_R
+    rest 12
+    spawn_cue CUE_HIHAT
+    rest 12
+return
+
+
+
+.section .script.main
+@ Drum Lesson (Short 6) - Tables
+
+struct D_08a41cc8
+    .word D_0806104c
+    .word D_08060ff8
+    .word s_hakushu_solo_seqData
+    .word D_08060fa0
+endstruct
+
+struct D_08a41cd8
+    .word D_0806104c
+    .word D_080610b0
+    .word s_hakushu_solo_seqData
+    .word D_08061070
+endstruct
+
+struct D_08a41ce8
+    .word D_0806104c
+    .word D_08061154
+    .word s_warai_little_seqData
+    .word D_08061110
+endstruct
+
+struct D_08a41cf8
+    .word D_0806104c
+    .word D_08061204
+    .word s_warai_seqData
+    .word D_080611c0
+endstruct
+
+struct D_08a41d08
+    .word D_080612c4
+    .word D_08061204
+    .word s_kansei_solo_seqData
+    .word D_08061288
+endstruct
+
+struct D_08a41d18
+    .word D_080612c4
+    .word D_08061330
+    .word s_kansei_solo_seqData
+    .word D_08061300
+endstruct
+
+
+
+@ Drum Lesson (Short 6) - Main Script
+
+script script_drum_lesson_short_6_main
+    set_tempo 120
+    set_music_volume 256
+    stop_tracking_inputs
+    dms_event08 4
+    dms_event09 1
+    rest 24
+    dms_event02 TRUE
+    run drum_lesson_script_import_pattern, D_08a41cc8
+    call drum_lessons_sub_08a7d7a0
+    run drum_lesson_script_import_pattern, D_08a41cd8
+    call drum_lessons_sub_08a7d7a0
+    run drum_lesson_script_import_pattern, D_08a41ce8
+    call drum_lessons_sub_08a7d7a0
+    run drum_lesson_script_import_pattern, D_08a41cf8
+    call drum_lessons_sub_08a7d7a0
+    run drum_lesson_script_import_pattern, D_08a41d08
+    call drum_lessons_sub_08a7d7a0
+    start_tracking_inputs
+    run drum_lesson_script_import_pattern, D_08a41d18
+    call drum_lessons_sub_08a7d7a0
+    dms_show_dialogue TRUE
+    dms_set_teacher_exp TEACHER_EXP_GIVE_RANK
+    dms_get_lesson_score
+return
+
+.end

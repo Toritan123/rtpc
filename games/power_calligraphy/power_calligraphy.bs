@@ -1,0 +1,355 @@
+.include "include/beatscript.inc"
+.include "games/power_calligraphy/macros.inc"
+
+
+
+.section .script.entry
+@ Power Calligraphy - Script Entry Point
+
+script script_power_calligraphy_entry
+    set_tempo 124
+    rest 24
+    call script_power_calligraphy_prologue
+    set_game_fade_in_time 16
+    load_power_calligraphy
+    enable_play_inputs
+    start_tracking_inputs
+    call script_power_calligraphy_practice
+    disable_pause_menu
+    disable_play_inputs
+    fade_music_out 48
+    fade_screen_out 12, BLACK
+    rest 24
+    rest 24
+stop
+
+define_gameplay_scene scene_power_calligraphy, script_power_calligraphy_entry
+
+
+
+@ Power Calligraphy - Script Entry Point (Skipped Practice)
+
+script script_power_calligraphy_skipped_practice_entry
+    set_tempo 124
+    set_game_fade_in_time 0
+    load_power_calligraphy
+    enable_play_inputs
+    start_tracking_inputs
+    call script_power_calligraphy_skipped_practice
+    disable_pause_menu
+    disable_play_inputs
+    fade_music_out 48
+    fade_screen_out 12, BLACK
+    rest 24
+    rest 24
+stop
+
+define_gameplay_scene scene_power_calligraphy_skipped_practice, script_power_calligraphy_skipped_practice_entry
+
+
+
+.section .script.prologue
+@ Power Calligraphy - Prologue
+
+script script_power_calligraphy_prologue
+    set_game_fade_in_time 8
+    load_game power_calligraphy_prologue_engine, 0
+    run stop_all_soundplayers
+    rest 24
+    play_sfx s_jingle_iai_seqData
+    rest 24
+    rest 24
+    rest 24
+    run func_080461f4, 0
+    rest 24
+    rest 24
+    rest 24
+    rest 24
+    run func_08006d80, 0
+    rest 24
+    set_game_fade_in_time 16
+return
+
+
+
+.section .script.main
+@ Power Calligraphy - Marking Criteria
+
+struct power_calligraphy_marking_criteria_0
+    /* Positive Remark */     .word D_0805d25c
+    /* Negative Remark */     .word D_0805d24c
+    /* Flags */               .hword CHECK_AVERAGE_HITS | OVERRIDE_COMMENTS | CHECK_AVERAGE_MISSES
+    /* Pos: Required Hits */  .hword 0x00 @ 0%
+    /* Neg: Minimum Hits */   .hword 0x80 @ 50%
+    /* Neg: Maximum Misses */ .hword 0x4C @ 30%
+endstruct
+
+struct power_calligraphy_marking_criteria_1
+    /* Positive Remark */     .word D_0805d274
+    /* Negative Remark */     .word D_0805d260
+    /* Flags */               .hword CHECK_AVERAGE_HITS
+    /* Pos: Required Hits */  .hword 0x100 @ 100%
+    /* Neg: Minimum Hits */   .hword 0x4C @ 30%
+    /* Neg: Maximum Misses */ .hword 1
+endstruct
+
+struct power_calligraphy_marking_criteria_2
+    /* Positive Remark */     .word D_0805d2a8
+    /* Negative Remark */     .word D_0805d288
+    /* Flags */               .hword CHECK_AVERAGE_HITS
+    /* Pos: Required Hits */  .hword 0x100 @ 100%
+    /* Neg: Minimum Hits */   .hword 0x80 @ 50%
+    /* Neg: Maximum Misses */ .hword 2
+endstruct
+
+struct power_calligraphy_marking_criteria_3
+    /* Positive Remark */     .word D_0805d2c0
+    /* Negative Remark */     .word D_0805d25c
+    /* Flags */               .hword CHECK_AVERAGE_MISSES
+    /* Pos: Required Hits */  .hword 0x100 @ 100%
+    /* Neg: Minimum Hits */   .hword 0x00 @ 0%
+    /* Neg: Maximum Misses */ .hword 0x100 @ 100%
+endstruct
+
+struct power_calligraphy_marking_criteria
+    .word power_calligraphy_marking_criteria_0
+    .word power_calligraphy_marking_criteria_1
+    .word power_calligraphy_marking_criteria_2
+    .word power_calligraphy_marking_criteria_3
+    .word END_OF_CRITERIA
+endstruct
+
+
+
+@ Power Calligraphy - Main Script
+
+script script_power_calligraphy_main
+    set_music_volume 256
+    set_tempo 127
+    play_music s_shuji_bgm1_seqData
+    rest 6
+    rest 24
+    rest 24
+    clear_text_f
+    rest 24
+    print_text_f D_0805d2dc
+    rest 24
+    rest 24
+    rest 24
+    rest 24
+    rest 24
+    rest 24
+    rest 24
+    rest 24
+    clear_text_f
+    rest 24
+    start_perfect_campaign
+    power_calligraphy_remove_paper
+    call script_power_calligraphy_sub_re_init
+    rest 24
+    rest 24
+    rest 24
+    set_results_header D_0805d2f0
+    import_marking_criteria power_calligraphy_marking_criteria
+    run gameplay_set_mercy_count, 2
+    set_marking_criteria 0
+    start_tracking_inputs
+    set_marking_criteria 0
+    call script_power_calligraphy_sub_re
+    power_calligraphy_remove_paper
+    call script_power_calligraphy_sub_comma_init
+    set_marking_criteria 0
+    call script_power_calligraphy_sub_comma
+    power_calligraphy_remove_paper
+    call script_power_calligraphy_sub_re_init
+    set_marking_criteria 0
+    call script_power_calligraphy_sub_re
+    power_calligraphy_remove_paper
+    call script_power_calligraphy_sub_chikara_init
+    set_marking_criteria 1
+    call script_power_calligraphy_sub_chikara
+    power_calligraphy_remove_paper
+    call script_power_calligraphy_sub_re_init
+    set_marking_criteria 0
+    call script_power_calligraphy_sub_re
+    power_calligraphy_remove_paper
+    call script_power_calligraphy_sub_comma_init
+    set_marking_criteria 0
+    call script_power_calligraphy_sub_comma
+    power_calligraphy_remove_paper
+    call script_power_calligraphy_sub_re_init
+    set_marking_criteria 0
+    call script_power_calligraphy_sub_re
+    power_calligraphy_remove_paper
+    call script_power_calligraphy_sub_onore_init
+    set_marking_criteria 0
+    call script_power_calligraphy_sub_onore
+    power_calligraphy_remove_paper
+    call script_power_calligraphy_sub_chikara_init
+    set_marking_criteria 1
+    call script_power_calligraphy_sub_chikara
+    power_calligraphy_remove_paper
+    call script_power_calligraphy_sub_onore_init
+    set_marking_criteria 0
+    call script_power_calligraphy_sub_onore
+    power_calligraphy_remove_paper
+    call script_power_calligraphy_sub_re_init
+    set_marking_criteria 0
+    call script_power_calligraphy_sub_re
+    power_calligraphy_remove_paper
+    call script_power_calligraphy_sub_sun_init
+    set_marking_criteria 0
+    call script_power_calligraphy_sub_sun
+    power_calligraphy_remove_paper
+    call script_power_calligraphy_sub_chikara_init
+    set_marking_criteria 1
+    call script_power_calligraphy_sub_chikara
+    power_calligraphy_remove_paper
+    call script_power_calligraphy_sub_onore_init
+    set_marking_criteria 0
+    call script_power_calligraphy_sub_onore
+    power_calligraphy_remove_paper
+    call script_power_calligraphy_sub_comma_init
+    set_marking_criteria 0
+    call script_power_calligraphy_sub_comma
+    power_calligraphy_remove_paper
+    call script_power_calligraphy_sub_kokoro_init
+    set_marking_criteria 2
+    call script_power_calligraphy_sub_kokoro
+    power_calligraphy_remove_paper
+    power_calligraphy_set_people_state LITTLE_PEOPLE_DANCE
+    call script_power_calligraphy_sub_re_init
+    set_tempo 161
+    play_music s_shuji_bgm2_seqData
+    set_marking_criteria 0
+    call script_power_calligraphy_sub_re
+    power_calligraphy_remove_paper
+    call script_power_calligraphy_sub_comma_init
+    set_marking_criteria 0
+    call script_power_calligraphy_sub_comma
+    power_calligraphy_remove_paper
+    call script_power_calligraphy_sub_chikara_init
+    set_marking_criteria 1
+    call script_power_calligraphy_sub_chikara
+    power_calligraphy_remove_paper
+    call script_power_calligraphy_sub_sun_init
+    set_marking_criteria 0
+    call script_power_calligraphy_sub_sun
+    power_calligraphy_remove_paper
+    call script_power_calligraphy_sub_re_init
+    set_marking_criteria 0
+    call script_power_calligraphy_sub_re
+    power_calligraphy_remove_paper
+    call script_power_calligraphy_sub_comma_init
+    set_marking_criteria 0
+    call script_power_calligraphy_sub_comma
+    power_calligraphy_remove_paper
+    call script_power_calligraphy_sub_onore_init
+    set_marking_criteria 0
+    call script_power_calligraphy_sub_onore
+    power_calligraphy_remove_paper
+    call script_power_calligraphy_sub_kokoro_init
+    set_marking_criteria 2
+    call script_power_calligraphy_sub_kokoro
+    power_calligraphy_remove_paper_slowly
+    power_calligraphy_set_people_state LITTLE_PEOPLE_END_BOW
+    call script_power_calligraphy_sub_face_init
+    set_tempo 98
+    play_music s_shuji_bgm3_seqData
+    power_calligraphy_set_people_state LITTLE_PEOPLE_BOW
+    set_marking_criteria 3
+    call script_power_calligraphy_sub_face
+    rest 24
+    mod_music_volume 0, 84
+    rest 24
+    rest 24
+    power_calligraphy_remove_paper_slowly
+    power_calligraphy_set_kana KANA_END_KANJI
+    power_calligraphy_set_kana_cel 0
+    power_calligraphy_set_brush 60, 16, 0
+    rest 24
+    run scene_stop_music
+    rest 24
+    set_music_volume 256
+    stop_tracking_perfect_campaign
+    play_music s_shuji_bgm_end_seqData
+    rest_beats 4
+    power_calligraphy_set_people_state LITTLE_PEOPLE_END_BOW
+    rest_beats 9
+    disable_pause_menu
+    rest 24
+return
+
+
+script script_power_calligraphy_practice
+    set_tempo 140
+    set_music_volume 256
+    stop_tracking_inputs
+    rest 24
+    enable_pause_menu
+    rest 24
+    play_music s_mario2_seqData
+    print_text_f D_0805d300
+    rest 24
+    rest 24
+    run gameplay_display_skip_icon, 3
+    run gameplay_set_tutorial scene_power_calligraphy_skipped_practice
+    rest 24
+    rest 24
+    rest 24
+    rest 24
+    clear_text_f
+    rest 24
+    print_text_f D_0805d318
+    power_calligraphy_remove_paper
+    loop_start
+        run beatscript_disable_loops
+        call script_power_calligraphy_sub_re_init
+        call script_power_calligraphy_sub_re
+        power_calligraphy_remove_paper
+    loop_end
+    clear_text_f
+    rest 24
+    print_text_f D_0805d33c
+    rest 24
+    rest 24
+    rest 24
+    clear_text_f
+    rest 24
+    print_text_f D_0805d350
+    rest 24
+    rest 24
+    rest 24
+    power_calligraphy_remove_paper
+    loop_start
+        run beatscript_disable_loops
+        call script_power_calligraphy_sub_comma_init
+        call script_power_calligraphy_sub_comma
+        power_calligraphy_remove_paper
+    loop_end
+    clear_text_f
+    rest 24
+    print_text_f D_0805d374
+    run gameplay_set_tutorial NULL
+    mod_music_volume 0, 144
+    rest 24
+    rest 24
+    rest 24
+    clear_text_f
+    rest 24
+    print_text_f D_0805d37c
+    rest 24
+    rest 24
+    rest 24
+    rest 24
+    goto script_power_calligraphy_main
+
+
+script script_power_calligraphy_skipped_practice
+    set_tempo 120
+    rest 24
+    enable_pause_menu
+    rest 24
+    goto script_power_calligraphy_main
+
+.end

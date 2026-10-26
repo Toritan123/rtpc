@@ -1,0 +1,32 @@
+
+# General project-specific ignores
+# Object files
+# PC port
+**/.DS_Store
+*.bak
+*.dump
+*.elf
+*.gba
+*.o
+*.sav
+.DS_Store
+.vscode/*
+__pycache__/
+build/
+build/*
+build_pc/
+build_win/
+ctx.c
+dist/
+third_party/
+tools/agbcc/*
+
+# Game data, written from the player's own ROM by tools/extract_assets.py
+# (make -f Makefile.pc assets); never commit it.
+*.4bpp
+*.tilemap
+*.mid
+audio/samples/*.wav
+bin/*.bin
+graphics/**/*.bin
+platform/sample_data.c

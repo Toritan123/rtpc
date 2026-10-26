@@ -1,0 +1,84 @@
+.include "include/beatscript.inc"
+.include "games/drum_live/macros.inc"
+
+
+
+.section .script.entry
+@ Drum LIVE - Script Entry Point
+
+script script_drum_live_entry
+    set_tempo 124
+    rest 24
+    rest 24
+    load_drum_live_menu
+    enable_play_inputs
+    start_tracking_inputs
+    call script_drum_live_menu
+    disable_pause_menu
+    disable_play_inputs
+    fade_music_out 48
+    fade_screen_out 12, BLACK
+    rest 24
+    rest 24
+stop
+
+define_gameplay_scene scene_drum_live, script_drum_live_entry
+
+
+
+.section .script.menu
+@ Drum LIVE (Menu) - Main Script
+
+script script_drum_live_menu
+    set_music_volume 200
+    play_music s_studio_bgm_seqData
+    rest 24
+    drum_live_menu_freeze_scene
+
+    run gameplay_get_inter_engine_variable, 0
+    switch INT8, GLOBAL_VARIABLE
+        case ENGINE_VER_DRUM_GIRLS_LIVE
+            load_drum_girls_live
+            break
+        case ENGINE_VER_DRUM_BOYS_LIVE
+            load_drum_boys_live
+            break
+        case ENGINE_VER_DRUM_BAND_LIVE
+            load_drum_samurai_band_live
+            break
+    end_switch
+
+    dml_set_disable_excitement TRUE
+    dml_set_enable_boredom FALSE
+    run gameplay_enable_cue_input_overlap, FALSE
+    rest 24
+    enable_pause_menu
+    run gameplay_get_inter_engine_variable, 0
+    switch INT8, GLOBAL_VARIABLE
+        case ENGINE_VER_DRUM_GIRLS_LIVE
+            call script_drum_girls_night_walk
+            call script_drum_girls_space_dance
+            call script_drum_girls_honey_sweet_angel
+            break
+        case ENGINE_VER_DRUM_BOYS_LIVE
+            call script_drum_boys_clappy_trio
+            call script_drum_boys_tap_trial
+            call script_drum_boys_wish
+            break
+        case ENGINE_VER_DRUM_BAND_LIVE
+            call script_drum_band_cosmic_dance
+            call script_drum_band_snappy_trio
+            call script_drum_band_tap_trial_2
+            break
+    end_switch
+
+    rest 24
+    rest 24
+    rest 24
+    rest 24
+    run gameplay_enable_tutorial, FALSE
+    disable_pause_menu
+return
+
+
+.end

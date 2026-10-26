@@ -1,0 +1,22 @@
+name: No game data
+
+# The PC port can only be built with the player's own ROM (the game data is
+# extracted from it at build time, see tools/extract_assets.py), so CI cannot
+# build it. What CI can do is make sure nothing from the ROM is ever
+# committed: no graphics, samples, sequences, ROM images or generated data.
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  no-rom-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for ROM-derived files
+        run: |
+          bad=$(git ls-files | grep -E '\.(gba|4bpp|tilemap|mid|wav|bin|pcm)$|^platform/sample_data\.c$' || true)
+          if [ -n "$bad" ]; then echo "ROM data must not be committed:"; echo "$bad"; exit 1; fi
+      - name: Manifest lists every file the build needs
+        run: python3 -c "import json; m = json.load(open('tools/asset_manifest.json')); assert len(m['files']) > 2000; print(len(m['files']), 'files in the manifest')"

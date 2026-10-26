@@ -1,0 +1,338 @@
+##############################################################################
+# Rhythm Tengoku – PC Port  (Makefile.pc)
+#
+# Usage:
+#   make -f Makefile.pc          # build  build_pc/rhythmtengoku_pc
+#   make -f Makefile.pc clean    # remove build artefacts
+#   make -f Makefile.pc run      # build and launch
+#
+# Prerequisites: clang (or gcc), SDL2, devkitpro (for bin2s)
+#   macOS:  brew install sdl2
+#   Ubuntu: apt install libsdl2-dev
+##############################################################################
+
+# ─── Target selection ───────────────────────────────────────────────────────
+#   make -f Makefile.pc                      host (macOS / Linux)
+#   make -f Makefile.pc PLATFORM=windows     cross-compile a Windows .exe
+#
+# Note on names: the C define PLATFORM_PC means "not the GBA" and covers every
+# desktop target — it is not the macOS build.  The per-OS pieces are named for
+# their OS (build/macos, build/windows) so the two sides read symmetrically.
+#
+# The Windows build needs the SDL2 mingw development package unpacked
+# somewhere; point SDL2_WIN at the x86_64-w64-mingw32 directory inside it:
+#   make -f Makefile.pc PLATFORM=win SDL2_WIN=/path/to/SDL2-2.x.y/x86_64-w64-mingw32
+PLATFORM ?= host
+ifeq ($(PLATFORM),win)          # accepted spelling, normalised
+  override PLATFORM := windows
+endif
+SDL2_WIN ?= third_party/SDL2-mingw/x86_64-w64-mingw32
+
+ifeq ($(PLATFORM),windows)
+  CC      := x86_64-w64-mingw32-gcc
+  LD      := x86_64-w64-mingw32-gcc
+  BUILD   := build/windows
+  TARGET  := $(BUILD)/rhythmtengoku.exe
+  ARCHFLAGS :=
+  BIN2SFLAGS :=
+  SDL2_CFLAGS := -I$(SDL2_WIN)/include -I$(SDL2_WIN)/include/SDL2
+  # -mwindows keeps a console window from opening alongside the game.
+  # SDL redefines main() to SDL_main on Windows, so -lSDL2main must come first.
+  SDL2_LIBS   := -L$(SDL2_WIN)/lib -lmingw32 -lSDL2main -lSDL2 -mwindows
+  # GCC 14+ promotes these legacy-C patterns to hard errors; the decompiled
+  # sources rely on all of them, exactly as the clang build does.
+  COMPATFLAGS := -Wno-error=implicit-function-declaration -Wno-error=int-conversion \
+                 -Wno-error=incompatible-pointer-types -Wno-error=implicit-int \
+                 -Wno-error=return-mismatch -fno-builtin
+else
+  CC      := clang
+  LD      := clang
+  HOST_OS := $(shell uname -s | tr A-Z a-z | sed 's/darwin/macos/')
+  BUILD   := build/$(HOST_OS)
+  TARGET  := $(BUILD)/rhythmtengoku_pc
+  # Pick the SDL2 whose architecture matches the host, then match the build to
+  # it.  A hardcoded -arch x86_64 breaks a runner whose Homebrew is arm64;
+  # dropping the flag entirely breaks a machine with only Intel Homebrew.  And
+  # a Mac with *both* Homebrews has two sdl2-configs: taking whichever comes
+  # first in PATH silently built an x86_64 binary on an M1, so the whole game
+  # ran under Rosetta — half speed, and AddressSanitizer refuses to start at
+  # all under translation, which is the tool this port most needs.
+  #
+  # Override with SDL2_CONFIG=/path/to/sdl2-config to force a particular one
+  # (e.g. to build x86_64 deliberately).
+  HOST_ARCH := $(shell uname -m)
+  SDL2_CONFIG ?= $(shell for c in /opt/homebrew/bin/sdl2-config /usr/local/bin/sdl2-config $$(command -v sdl2-config 2>/dev/null); do \
+                     [ -x "$$c" ] || continue; \
+                     p=$$("$$c" --prefix 2>/dev/null); \
+                     lipo -archs "$$p/lib/libSDL2.dylib" 2>/dev/null | tr ' ' '\n' \
+                       | grep -qx "$(HOST_ARCH)" && { echo "$$c"; break; }; \
+                   done)
+  # No arch match, or no lipo at all (Linux): whatever PATH offers.
+  ifeq ($(strip $(SDL2_CONFIG)),)
+    SDL2_CONFIG := sdl2-config
+  endif
+  SDL2_PREFIX := $(shell $(SDL2_CONFIG) --prefix 2>/dev/null)
+  SDL2_ARCH := $(shell lipo -archs $(SDL2_PREFIX)/lib/libSDL2.dylib 2>/dev/null | awk '{print $$1}')
+  ARCHFLAGS := $(if $(SDL2_ARCH),-arch $(SDL2_ARCH),)
+  # Apple's assembler needs bin2s's Mach-O dialect; everything else takes GNU.
+  BIN2SFLAGS := --apple-llvm
+  SDL2_CFLAGS := $(shell $(SDL2_CONFIG) --cflags) $(if $(SDL2_PREFIX),-I$(SDL2_PREFIX)/include,)
+  SDL2_LIBS   := $(shell $(SDL2_CONFIG) --libs)
+  COMPATFLAGS :=
+endif
+
+# tools/bin2s.py is a drop-in for devkitPro's bin2s (verified byte-identical
+# object output), so the PC port builds with no devkitPro install — which is
+# what lets CI runners build it.  Override BIN2S to use devkitPro's instead.
+BIN2S   := python3 tools/bin2s.py
+
+# ─── Compiler flags ─────────────────────────────────────────────────────────
+# Optimisation level.  This was pinned at -O0 — a debug build — and it was what
+# `make app` shipped.  -O2 roughly halves the per-frame work against a 16.74 ms
+# budget.  Use OPT=-O0 to step through decompiled code in a debugger.
+#
+# The default only moved once the heap corruption in the text scenes was fixed
+# (undersized allocations for structs whose sizes were recorded on the GBA).
+# -O2 did not cause that bug, but it did change the layout enough to turn an
+# intermittent crash into a frequent one, which is how it was found.
+#
+# -fno-strict-aliasing (below, in COMPATFLAGS) stays at every level:
+# decompiled code type-puns constantly, and strict aliasing would let the
+# optimiser act on assumptions the original code never held.
+OPT ?= -O2
+
+CFLAGS  := -DPLATFORM_PC -DRTPC_FRAMEDUMP \
+           $(ARCHFLAGS) $(COMPATFLAGS) \
+           -std=gnu11 \
+           $(OPT) -g \
+           -I. \
+           -Iinclude \
+           $(SDL2_CFLAGS) \
+           -Wno-unused-function \
+           -Wno-unused-variable \
+           -Wno-unused-value \
+           -Werror=implicit-function-declaration \
+           -Wno-parentheses \
+           -Wno-int-conversion \
+           -Wno-pointer-to-int-cast \
+           -Wno-int-to-pointer-cast \
+           -Wno-incompatible-pointer-types \
+           -Wno-pointer-sign \
+           -Wno-tautological-compare \
+           -Wno-bitwise-op-parentheses \
+           -Wno-shift-op-parentheses \
+           -Wno-logical-op-parentheses \
+           -Wno-shift-count-overflow \
+           -Wno-implicit-int \
+           -Wno-return-type \
+           -Wno-char-subscripts \
+           -funsigned-char \
+           -fno-strict-aliasing \
+           $(EXTRA_CFLAGS)
+
+LDFLAGS := $(ARCHFLAGS) $(SDL2_LIBS) -lm $(EXTRA_LDFLAGS)
+
+# ─── Source collection ───────────────────────────────────────────────────────
+find_c = $(shell find $(1) -name '*.c' ! -name '*.inc.c' 2>/dev/null)
+
+# platform/sample_data.c is generated (below), so it may not exist yet here.
+PLATFORM_SRCS := $(filter-out platform/sample_data.c,$(call find_c,platform)) platform/sample_data.c
+SRC_SRCS      := $(call find_c,src)
+AUDIO_SRCS    := $(call find_c,audio)
+DATA_SRCS     := $(call find_c,data)
+GAMES_SRCS    := $(call find_c,games)
+GRAPHICS_SRCS := $(call find_c,graphics)
+
+# Exclude the GBA entry-point file (we supply our own main() in platform/)
+SRC_SRCS := $(filter-out src/udivdi3.c,$(SRC_SRCS))
+
+ALL_SRCS := $(PLATFORM_SRCS) $(SRC_SRCS) $(AUDIO_SRCS) $(DATA_SRCS) $(GAMES_SRCS) $(GRAPHICS_SRCS)
+
+C_OBJS := $(patsubst %.c,$(BUILD)/%.o,$(ALL_SRCS))
+
+# ─── Binary data files ───────────────────────────────────────────────────────
+# .bin, .mid, .4bpp, .raw.4bpp files are converted to linkable object files
+# using bin2s (from devkitpro) with --apple-llvm flag for macOS assembler.
+
+# They are not in the repository: tools/extract_assets.py writes them from the
+# player's own ROM (BASEROM), checked against tools/asset_manifest.json.
+BASEROM ?= baserom.gba
+ASSET_FILES := $(shell python3 -c "import json; print(' '.join(json.load(open('tools/asset_manifest.json'))['files']))")
+BIN_SRCS := $(filter-out %.wav,$(ASSET_FILES))
+
+BIN_OBJS := $(patsubst %,$(BUILD)/%.o,$(BIN_SRCS))
+
+# All objects.
+# On Windows the auto_stubs object must come LAST: its stubs are plain
+# definitions there (PE/COFF has no usable weak definitions), so ld's
+# first-definition-wins rule under --allow-multiple-definition is what keeps
+# the 735 real implementations that share a name with a stub.
+STUB_OBJ := $(BUILD)/platform/auto_stubs.o
+ifeq ($(PLATFORM),windows)
+  OBJS := $(filter-out $(STUB_OBJ),$(C_OBJS)) $(BIN_OBJS) $(STUB_OBJ)
+  LDFLAGS += -Wl,--allow-multiple-definition
+else
+  OBJS := $(C_OBJS) $(BIN_OBJS)
+endif
+
+# ─── Rules ──────────────────────────────────────────────────────────────────
+.PHONY: all clean run
+
+all: $(TARGET)
+
+# The object list is ~2100 paths, well past Windows' 32 KB command-line limit,
+# so the link died there with no diagnostic.  A linker response file keeps the
+# actual command short on every platform.
+$(TARGET): $(OBJS)
+	@echo "Linking $@"
+	@mkdir -p $(dir $@)
+	@printf '%s\n' $(OBJS) > $(BUILD)/objects.rsp
+	$(LD) @$(BUILD)/objects.rsp $(LDFLAGS) -o $@
+
+$(BUILD)/%.o: %.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -MMD -MP -MF $(BUILD)/$*.d -c $< -o $@
+
+# Include auto-generated header dependency files (enables header-change rebuilds)
+-include $(patsubst %.c,$(BUILD)/%.d,$(ALL_SRCS))
+
+# Binary → object via bin2s --apple-llvm | as
+$(BUILD)/%.bin.o: %.bin
+	@mkdir -p $(dir $@)
+	$(BIN2S) $(BIN2SFLAGS) $< | $(CC) $(ARCHFLAGS) -x assembler-with-cpp -c - -o $@
+
+$(BUILD)/%.mid.o: %.mid
+	@mkdir -p $(dir $@)
+	$(BIN2S) $(BIN2SFLAGS) $< | $(CC) $(ARCHFLAGS) -x assembler-with-cpp -c - -o $@
+
+$(BUILD)/%.4bpp.o: %.4bpp
+	@mkdir -p $(dir $@)
+	$(BIN2S) $(BIN2SFLAGS) $< | $(CC) $(ARCHFLAGS) -x assembler-with-cpp -c - -o $@
+
+$(BUILD)/%.raw.4bpp.o: %.raw.4bpp
+	@mkdir -p $(dir $@)
+	$(BIN2S) $(BIN2SFLAGS) $< | $(CC) $(ARCHFLAGS) -x assembler-with-cpp -c - -o $@
+
+$(BUILD)/%.tilemap.o: %.tilemap
+	@mkdir -p $(dir $@)
+	$(BIN2S) $(BIN2SFLAGS) $< | $(CC) $(ARCHFLAGS) -x assembler-with-cpp -c - -o $@
+
+# ─── Game data from the ROM ─────────────────────────────────────────────────
+ASSET_STAMP := $(BUILD)/.assets_extracted
+
+.PHONY: assets
+assets: $(ASSET_STAMP)
+
+$(ASSET_STAMP): tools/asset_manifest.json tools/extract_assets.py
+	@mkdir -p $(dir $@)
+	python3 tools/extract_assets.py "$(BASEROM)"
+	@touch $@
+
+# Order-only, so files already extracted never look out of date; a file
+# deleted after the stamp was written is extracted again on demand.
+$(ASSET_FILES): | $(ASSET_STAMP)
+	@test -f $@ || python3 tools/extract_assets.py "$(BASEROM)"
+
+platform/sample_data.c: audio/sample_table.json tools/gen_sample_c.py | $(ASSET_STAMP)
+	python3 tools/gen_sample_c.py audio/sample_table.json $@
+
+clean:
+	rm -rf $(BUILD)
+
+run: all
+	$(TARGET)
+
+# ─── macOS .app bundle ───────────────────────────────────────────────────────
+# Produces a double-clickable app with SDL2 copied inside, so it runs on a Mac
+# that has no Homebrew.
+#
+# Homebrew's "sdl2" is really sdl2-compat, a shim that dlopens SDL3 at run
+# time via @loader_path/libSDL3.dylib.  Copying only the shim gives an app that
+# hangs at launch behind an SDL error dialog, so any such runtime dependency is
+# resolved from the library's own load strings and bundled alongside it.  Launching from Finder also means the game is never a
+# child of a terminal, which is the only way to be sure keystrokes cannot land
+# in a shell behind it.
+APPNAME := Rhythm Tengoku
+APPDIR  := dist/$(APPNAME).app
+
+.PHONY: app
+app: $(TARGET)
+	@rm -rf "$(APPDIR)"
+	@mkdir -p "$(APPDIR)/Contents/MacOS" "$(APPDIR)/Contents/Frameworks" "$(APPDIR)/Contents/Resources"
+	@cp $(TARGET) "$(APPDIR)/Contents/MacOS/rhythmtengoku"
+	@printf '%s' 'APPL????' > "$(APPDIR)/Contents/PkgInfo"
+	@sdl=$$(otool -L $(TARGET) | awk '/libSDL2/{print $$1; exit}'); \
+	  real=$$(python3 -c "import os,sys;print(os.path.realpath(sys.argv[1]))" "$$sdl"); \
+	  base=$$(basename "$$sdl"); \
+	  cp "$$real" "$(APPDIR)/Contents/Frameworks/$$base"; \
+	  chmod u+w "$(APPDIR)/Contents/Frameworks/$$base"; \
+	  install_name_tool -change "$$sdl" "@executable_path/../Frameworks/$$base" \
+	      "$(APPDIR)/Contents/MacOS/rhythmtengoku"; \
+	  install_name_tool -id "@executable_path/../Frameworks/$$base" \
+	      "$(APPDIR)/Contents/Frameworks/$$base"; \
+	  want=$$(lipo -archs "$(APPDIR)/Contents/MacOS/rhythmtengoku" | awk '{print $$1}'); \
+	  for dep in $$(strings "$$real" | grep -E '^@loader_path/lib.*\.dylib$$' | sed 's|@loader_path/||' | sort -u); do \
+	    src=""; \
+	    for cand in "$$(dirname "$$real")/$$dep" \
+	                "$(SDL2_PREFIX)/lib/$$dep" \
+	                "/opt/homebrew/lib/$$dep" "/usr/local/lib/$$dep" \
+	                "$$(brew --prefix 2>/dev/null)/lib/$$dep"; do \
+	      [ -f "$$cand" ] || continue; \
+	      lipo -archs "$$cand" 2>/dev/null | tr ' ' '\n' | grep -qx "$$want" || continue; \
+	      src="$$cand"; break; \
+	    done; \
+	    if [ -z "$$src" ]; then \
+	      echo "ERROR: $$base needs $$dep ($$want) at run time and no $$want build was found."; \
+	      echo "       A wrong-architecture copy is worse than none: sdl2-compat dlopens"; \
+	      echo "       SDL3 by name, so the app launches and then dies on an alert saying"; \
+	      echo "       'Failed loading SDL3 library'."; \
+	      exit 1; \
+	    fi; \
+	    if [ -f "$$src" ]; then \
+	      echo "  bundling runtime dependency $$dep"; \
+	      cp "$$(python3 -c "import os,sys;print(os.path.realpath(sys.argv[1]))" "$$src")" \
+	         "$(APPDIR)/Contents/Frameworks/$$dep"; \
+	      chmod u+w "$(APPDIR)/Contents/Frameworks/$$dep"; \
+	      install_name_tool -id "@loader_path/$$dep" "$(APPDIR)/Contents/Frameworks/$$dep"; \
+	    fi; \
+	  done
+	@want=$$(lipo -archs "$(APPDIR)/Contents/MacOS/rhythmtengoku" | awk '{print $$1}'); \
+	  for f in "$(APPDIR)"/Contents/Frameworks/*.dylib; do \
+	    lipo -archs "$$f" 2>/dev/null | tr ' ' '\n' | grep -qx "$$want" || { \
+	      echo "ERROR: $$(basename $$f) is $$(lipo -archs $$f), executable is $$want"; exit 1; }; \
+	  done
+	@printf '%s\n' \
+	  '<?xml version="1.0" encoding="UTF-8"?>' \
+	  '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' \
+	  '<plist version="1.0"><dict>' \
+	  '  <key>CFBundleName</key><string>$(APPNAME)</string>' \
+	  '  <key>CFBundleDisplayName</key><string>$(APPNAME)</string>' \
+	  '  <key>CFBundleExecutable</key><string>rhythmtengoku</string>' \
+	  '  <key>CFBundleIdentifier</key><string>local.rtpc.rhythmtengoku</string>' \
+	  '  <key>CFBundlePackageType</key><string>APPL</string>' \
+	  '  <key>CFBundleShortVersionString</key><string>0.1</string>' \
+	  '  <key>CFBundleVersion</key><string>0.1</string>' \
+	  '  <key>CFBundleIconFile</key><string>AppIcon</string>' \
+	  '  <key>NSHighResolutionCapable</key><true/>' \
+	  '  <key>NSPrincipalClass</key><string>NSApplication</string>' \
+	  '  <!-- A game has no restorable window state.  Without this, a launch after' \
+	  '       an unclean exit stops on the system "reopen windows?" modal, which' \
+	  '       from outside looks exactly like a hang: no window, no output, main' \
+	  '       thread spinning in AEProcessAppleEvent. -->' \
+	  '  <key>NSQuitAlwaysKeepsWindows</key><false/>' \
+	  '  <key>LSMinimumSystemVersion</key><string>10.13</string>' \
+	  '</dict></plist>' > "$(APPDIR)/Contents/Info.plist"
+	@if [ -f dist/AppIcon.icns ]; then cp dist/AppIcon.icns "$(APPDIR)/Contents/Resources/"; fi
+	@codesign --force --deep --sign - "$(APPDIR)" 2>/dev/null || true
+	@echo "Built $(APPDIR)"
+
+# ─── Windows distribution folder ─────────────────────────────────────────────
+# The .exe needs SDL2.dll beside it; this stages both so the folder can be
+# copied to a Windows machine and run as-is.
+.PHONY: win-dist
+win-dist:
+	@$(MAKE) -f Makefile.pc PLATFORM=windows
+	@mkdir -p dist/windows
+	@cp build/windows/rhythmtengoku.exe dist/windows/
+	@cp $(SDL2_WIN)/bin/SDL2.dll dist/windows/
+	@echo "Built dist/windows/ (rhythmtengoku.exe + SDL2.dll)"

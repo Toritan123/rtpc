@@ -1,0 +1,69 @@
+#include "global.h"
+#include "graphics.h"
+
+// [D_088b8e70] Palette
+Palette wizards_waltz_prologue_pal[] = {
+    /* PALETTE 00 */ {
+        /* 00 */ TO_RGB555(0xA8A8A8),
+        /* 01 */ TO_RGB555(0xB80068),
+        /* 02 */ TO_RGB555(0xF8F8F8),
+        /* 03 */ TO_RGB555(0xF8D090),
+        /* 04 */ TO_RGB555(0x780030),
+        /* 05 */ TO_RGB555(0x904868),
+        /* 06 */ TO_RGB555(0x002840),
+        /* 07 */ TO_RGB555(0xD0A878),
+        /* 08 */ TO_RGB555(0xC8C8C8),
+        /* 09 */ TO_RGB555(0xE8F000),
+        /* 10 */ TO_RGB555(0xD8D000),
+        /* 11 */ TO_RGB555(0xA0A800),
+        /* 12 */ TO_RGB555(0x605058),
+        /* 13 */ TO_RGB555(0x602800),
+        /* 14 */ TO_RGB555(0xD86000),
+        /* 15 */ TO_RGB555(0x200060)
+    },
+    /* PALETTE 01 */ {
+        /* 00 */ TO_RGB555(0x90A880),
+        /* 01 */ TO_RGB555(0x000000),
+        /* 02 */ TO_RGB555(0xF8F8F8),
+        /* 03 */ TO_RGB555(0xF8F0C8),
+        /* 04 */ TO_RGB555(0xF8E898),
+        /* 05 */ TO_RGB555(0xF8D860),
+        /* 06 */ TO_RGB555(0xF85000),
+        /* 07 */ TO_RGB555(0xF89000),
+        /* 08 */ TO_RGB555(0xF8B800),
+        /* 09 */ TO_RGB555(0xB800B8),
+        /* 10 */ TO_RGB555(0x780078),
+        /* 11 */ TO_RGB555(0xD00000),
+        /* 12 */ TO_RGB555(0x000000),
+        /* 13 */ TO_RGB555(0x40D800),
+        /* 14 */ TO_RGB555(0x38B800),
+        /* 15 */ TO_RGB555(0x288800)
+    },
+    /* PALETTE 02 */ {
+        /* 00 */ TO_RGB555(0xA8A8A8),
+        /* 01 */ TO_RGB555(0x785818),
+        /* 02 */ TO_RGB555(0xF8F8F8),
+        /* 03 */ TO_RGB555(0xF8D090),
+        /* 04 */ TO_RGB555(0xD0A030),
+        /* 05 */ TO_RGB555(0xB80068),
+        /* 06 */ TO_RGB555(0xF89898),
+        /* 07 */ TO_RGB555(0xF8F0C8),
+        /* 08 */ TO_RGB555(0xF8E898),
+        /* 09 */ TO_RGB555(0xF8D860),
+        /* 10 */ TO_RGB555(0xD0A830),
+        /* 11 */ TO_RGB555(0x000000),
+        /* 12 */ TO_RGB555(0x000000),
+        /* 13 */ TO_RGB555(0x000000),
+        /* 14 */ TO_RGB555(0x000000),
+        /* 15 */ TO_RGB555(0xF83030)
+    },
+#ifdef PLATFORM_PC // ROM bytes past this palette (tools/gen_pal_overread.py)
+    /* PALETTE 03 */ { 0x0001, 0x00fb, 0x01fd, 0x009f, 0x0004, 0x00e0, 0x81ac, 0x0004, 0x80e0, 0x41cc, 0x001c, 0x4000, 0x81ac, 0x0084, 0x8000, 0x01cc },
+    /* PALETTE 04 */ { 0x001f, 0x0008, 0x00e0, 0x81ac, 0x0004, 0x80e0, 0x41cc, 0x001c, 0x4000, 0x81ac, 0x0084, 0x8000, 0x01cc, 0x001f, 0x00e0, 0x81d4 },
+    /* PALETTE 05 */ { 0x0008, 0x80e0, 0x41f4, 0x001b, 0x4000, 0x81d4, 0x008c, 0x8000, 0x01f4, 0x005f, 0x000b, 0x00e0, 0x81ac, 0x0004, 0x80e0, 0x41cc },
+    /* PALETTE 06 */ { 0x001c, 0x4000, 0x81ac, 0x0084, 0x8000, 0x01cc, 0x001f, 0x00e0, 0x81d4, 0x0008, 0x80e0, 0x41f4, 0x001b, 0x4000, 0x81d4, 0x008c },
+    /* PALETTE 07 */ { 0x8000, 0x01f4, 0x005f, 0x00e0, 0x81fc, 0x000c, 0x4000, 0x81fc, 0x0088, 0x4010, 0x41fc, 0x0099, 0x0011, 0x00e0, 0x81ac, 0x0004 },
+    /* PALETTE 08 */ { 0x80e0, 0x41cc, 0x001c, 0x4000, 0x81ac, 0x0084, 0x8000, 0x01cc, 0x001f, 0x00e0, 0x81d4, 0x0008, 0x80e0, 0x41f4, 0x001b, 0x4000 },
+    /* PALETTE 09 */ { 0x81d4, 0x008c, 0x8000, 0x01f4, 0x005f, 0x00e0, 0x81fc, 0x000c, 0x4000, 0x81fc, 0x0088, 0x4010, 0x41fc, 0x0099, 0x00e8, 0x801c },
+#endif // PLATFORM_PC
+};

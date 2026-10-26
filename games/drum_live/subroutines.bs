@@ -1,0 +1,1013 @@
+.include "include/beatscript.inc"
+.include "games/drum_live/macros.inc"
+
+load_drum_live_labels
+
+
+
+.section .script.sub
+@ Drum LIVE - Subroutines
+
+script drum_live_pat00
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    rest 6
+    spawn_cue CUE_LIVE_02
+    rest 6
+    spawn_cue CUE_LIVE_01
+    spawn_cue CUE_LIVE_01
+    rest 6
+    spawn_cue CUE_LIVE_02
+    rest 6
+    beat_anim
+    no_op
+return
+
+
+script drum_live_pat01
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    rest 6
+    spawn_cue CUE_LIVE_02
+    rest 6
+    spawn_cue CUE_LIVE_01
+    spawn_cue CUE_LIVE_01
+    rest 6
+    spawn_cue CUE_LIVE_02
+    rest 6
+return
+
+
+script drum_live_pat02
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    rest 6
+    spawn_cue CUE_LIVE_02
+    rest 6
+    dml_event05 0
+    spawn_cue CUE_LIVE_01
+    dml_event05 0
+    spawn_cue CUE_LIVE_01
+    rest 6
+    spawn_cue CUE_LIVE_02
+    rest 6
+    beat_anim
+    no_op
+return
+
+
+script drum_live_pat03
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    rest 6
+    spawn_cue CUE_LIVE_02
+    rest 6
+    dml_set_guitarist_next_state 0x3, 2
+    dml_event05 0
+    spawn_cue CUE_LIVE_01
+    dml_event05 0
+    spawn_cue CUE_LIVE_01
+    rest 6
+    spawn_cue CUE_LIVE_02
+    rest 6
+    beat_anim
+    no_op
+return
+
+
+@ Unused?
+script drum_live_pat04
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    rest 6
+    spawn_cue CUE_LIVE_02
+    rest 6
+    dml_set_guitarist_next_state 0x3, 1
+    dml_event05 0
+    spawn_cue CUE_LIVE_01
+    dml_event05 0
+    spawn_cue CUE_LIVE_01
+    rest 6
+    spawn_cue CUE_LIVE_02
+    rest 6
+    beat_anim
+    no_op
+return
+
+
+@ Unused?
+script drum_live_pat05
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    rest 6
+    dml_event05 3
+    spawn_cue CUE_LIVE_02
+    rest 6
+    dml_event05 1
+    spawn_cue CUE_LIVE_01
+    dml_event05 1
+    spawn_cue CUE_LIVE_01
+    rest 6
+    spawn_cue CUE_LIVE_02
+    rest 6
+    beat_anim
+    no_op
+return
+
+
+script drum_live_pat06
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    rest 6
+    dml_event05 3
+    spawn_cue CUE_LIVE_02
+    rest 6
+    dml_set_guitarist_next_state 0x3, 2
+    dml_event05 1
+    spawn_cue CUE_LIVE_01
+    dml_event05 1
+    spawn_cue CUE_LIVE_01
+    rest 6
+    spawn_cue CUE_LIVE_02
+    rest 6
+    beat_anim
+    no_op
+return
+
+
+script drum_live_pat07
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    rest 6
+    dml_event05 3
+    spawn_cue CUE_LIVE_02
+    rest 6
+    dml_set_guitarist_next_state 0x3, 1
+    dml_event05 1
+    spawn_cue CUE_LIVE_01
+    dml_event05 1
+    spawn_cue CUE_LIVE_01
+    rest 6
+    spawn_cue CUE_LIVE_02
+    rest 6
+    beat_anim
+    no_op
+return
+
+
+script drum_live_pat08
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_event05 0
+    spawn_cue CUE_LIVE_00
+    dml_event05 0
+    spawn_cue CUE_LIVE_00
+    dml_event05 0
+    spawn_cue CUE_LIVE_00
+    rest 6
+    spawn_cue CUE_LIVE_02
+    rest 6
+    spawn_cue CUE_LIVE_01
+    spawn_cue CUE_LIVE_01
+    rest 6
+    spawn_cue CUE_LIVE_02
+    rest 6
+    beat_anim
+    no_op
+return
+
+
+script drum_live_pat09
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_event05 2
+    spawn_cue CUE_LIVE_00
+    dml_event05 2
+    spawn_cue CUE_LIVE_00
+    dml_event05 2
+    spawn_cue CUE_LIVE_00
+    rest 6
+    spawn_cue CUE_LIVE_02
+    rest 6
+    spawn_cue CUE_LIVE_01
+    spawn_cue CUE_LIVE_01
+    rest 6
+    spawn_cue CUE_LIVE_02
+    rest 6
+    beat_anim
+    no_op
+return
+
+
+script drum_live_pat10
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    rest 6
+    spawn_cue CUE_LIVE_02
+    rest 6
+    spawn_cue CUE_LIVE_01
+    spawn_cue CUE_LIVE_01
+    rest 6
+    spawn_cue CUE_LIVE_02
+    rest 6
+    beat_anim
+    no_op
+return
+
+
+script drum_live_pat11
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    rest 6
+    spawn_cue CUE_LIVE_02
+    rest 6
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    rest 6
+    spawn_cue CUE_LIVE_02
+    rest 6
+    beat_anim
+    no_op
+return
+
+
+script drum_live_pat12
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    rest 6
+    spawn_cue CUE_LIVE_02
+    rest 6
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    rest 6
+    spawn_cue CUE_LIVE_02
+    rest 6
+    beat_anim
+    no_op
+return
+
+
+script drum_live_pat13
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    rest 6
+    dml_event05 3
+    spawn_cue CUE_LIVE_02
+    rest 6
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    rest 6
+    dml_event05 3
+    spawn_cue CUE_LIVE_02
+    rest 6
+    beat_anim
+    no_op
+return
+
+
+script drum_live_pat14
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    rest 6
+    spawn_cue CUE_LIVE_02
+    rest 6
+    spawn_cue CUE_LIVE_01
+    rest 6
+    dml_event05 3
+    spawn_cue CUE_LIVE_02
+    dml_event05 3
+    spawn_cue CUE_LIVE_02
+    dml_event05 3
+    spawn_cue CUE_LIVE_02
+    rest 6
+    beat_anim
+    no_op
+    spawn_cue CUE_LIVE_00
+    rest 6
+    spawn_cue CUE_LIVE_02
+    rest 6
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    rest 6
+    spawn_cue CUE_LIVE_02
+    rest 6
+    beat_anim
+    no_op
+return
+
+
+script drum_live_pat15
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    rest 8
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    rest 8
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    rest 8
+    beat_anim
+    no_op
+return
+
+
+script drum_live_pat16
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    rest 8
+    spawn_cue CUE_LIVE_02
+    rest 8
+    spawn_cue CUE_LIVE_01
+    spawn_cue CUE_LIVE_01
+    rest 8
+    beat_anim
+    no_op
+return
+
+
+script drum_live_pat17
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    rest 8
+    spawn_cue CUE_LIVE_02
+    rest 8
+    spawn_cue CUE_LIVE_01
+    spawn_cue CUE_LIVE_01
+    rest 8
+return
+
+
+script drum_live_pat18
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    rest 8
+    spawn_cue CUE_LIVE_02
+    rest 8
+    dml_event05 0
+    spawn_cue CUE_LIVE_01
+    dml_event05 0
+    spawn_cue CUE_LIVE_01
+    rest 8
+    beat_anim
+    no_op
+return
+
+
+@ Unused?
+script drum_live_pat19
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    rest 8
+    dml_event05 3
+    spawn_cue CUE_LIVE_02
+    rest 8
+    dml_event05 1
+    spawn_cue CUE_LIVE_01
+    dml_event05 1
+    spawn_cue CUE_LIVE_01
+    rest 8
+    beat_anim
+    no_op
+return
+
+
+script drum_live_pat20
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_event05 0
+    spawn_cue CUE_LIVE_00
+    dml_event05 0
+    spawn_cue CUE_LIVE_00
+    dml_event05 0
+    spawn_cue CUE_LIVE_00
+    rest 8
+    spawn_cue CUE_LIVE_02
+    rest 8
+    spawn_cue CUE_LIVE_01
+    spawn_cue CUE_LIVE_01
+    rest 8
+    beat_anim
+    no_op
+return
+
+
+@ Unused?
+script drum_live_pat21
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_event05 2
+    spawn_cue CUE_LIVE_00
+    dml_event05 2
+    spawn_cue CUE_LIVE_00
+    dml_event05 2
+    spawn_cue CUE_LIVE_00
+    rest 8
+    spawn_cue CUE_LIVE_02
+    rest 8
+    spawn_cue CUE_LIVE_01
+    spawn_cue CUE_LIVE_01
+    rest 8
+    beat_anim
+    no_op
+return
+
+
+script drum_live_pat22
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    rest 8
+    spawn_cue CUE_LIVE_02
+    rest 8
+    spawn_cue CUE_LIVE_01
+    spawn_cue CUE_LIVE_01
+    rest 8
+    beat_anim
+    no_op
+return
+
+
+@ Unused?
+script drum_live_pat23
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    rest 8
+    spawn_cue CUE_LIVE_02
+    rest 8
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    rest 8
+    beat_anim
+    no_op
+return
+
+
+script drum_live_pat24
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    rest 8
+    spawn_cue CUE_LIVE_02
+    rest 8
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    rest 8
+    beat_anim
+    no_op
+return
+
+
+@ Unused?
+script drum_live_pat25
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    rest 8
+    dml_event05 3
+    spawn_cue CUE_LIVE_02
+    rest 8
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    rest 8
+    beat_anim
+    no_op
+return
+
+
+script drum_live_pat26
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    rest 8
+    spawn_cue CUE_LIVE_01
+    rest 4
+    spawn_cue CUE_LIVE_01
+    spawn_cue CUE_LIVE_01
+    rest 8
+    spawn_cue CUE_LIVE_01
+    rest 4
+    beat_anim
+    no_op
+return
+
+
+script drum_live_pat27
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    rest 8
+    spawn_cue CUE_LIVE_01
+    rest 4
+    spawn_cue CUE_LIVE_01
+    spawn_cue CUE_LIVE_01
+    rest 8
+    spawn_cue CUE_LIVE_01
+    rest 4
+return
+
+
+@ Unused?
+script drum_live_pat28
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    rest 8
+    spawn_cue CUE_LIVE_01
+    rest 4
+    dml_event05 0
+    spawn_cue CUE_LIVE_01
+    dml_event05 0
+    spawn_cue CUE_LIVE_01
+    rest 8
+    spawn_cue CUE_LIVE_01
+    rest 4
+    beat_anim
+    no_op
+return
+
+
+@ Unused?
+script drum_live_pat29
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    rest 8
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    rest 4
+    dml_event05 1
+    spawn_cue CUE_LIVE_01
+    dml_event05 1
+    spawn_cue CUE_LIVE_01
+    rest 8
+    spawn_cue CUE_LIVE_01
+    rest 4
+    beat_anim
+    no_op
+return
+
+
+script drum_live_pat30
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_event05 0
+    spawn_cue CUE_LIVE_00
+    dml_event05 0
+    spawn_cue CUE_LIVE_00
+    dml_event05 0
+    spawn_cue CUE_LIVE_00
+    rest 8
+    spawn_cue CUE_LIVE_01
+    rest 4
+    spawn_cue CUE_LIVE_01
+    spawn_cue CUE_LIVE_01
+    rest 8
+    spawn_cue CUE_LIVE_01
+    rest 4
+    beat_anim
+    no_op
+return
+
+
+@ Unused?
+script drum_live_pat31
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_event05 2
+    spawn_cue CUE_LIVE_00
+    dml_event05 2
+    spawn_cue CUE_LIVE_00
+    dml_event05 2
+    spawn_cue CUE_LIVE_00
+    rest 8
+    spawn_cue CUE_LIVE_01
+    rest 4
+    spawn_cue CUE_LIVE_01
+    spawn_cue CUE_LIVE_01
+    rest 8
+    spawn_cue CUE_LIVE_01
+    rest 4
+    beat_anim
+    no_op
+return
+
+
+script drum_live_pat32
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    rest 8
+    spawn_cue CUE_LIVE_01
+    rest 4
+    spawn_cue CUE_LIVE_01
+    spawn_cue CUE_LIVE_01
+    rest 8
+    spawn_cue CUE_LIVE_01
+    rest 4
+    beat_anim
+    no_op
+return
+
+
+@ Unused?
+script drum_live_pat33
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    rest 8
+    spawn_cue CUE_LIVE_01
+    rest 4
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    rest 8
+    spawn_cue CUE_LIVE_01
+    rest 4
+    beat_anim
+    no_op
+return
+
+
+@ Unused?
+script drum_live_pat34
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    rest 8
+    spawn_cue CUE_LIVE_01
+    rest 4
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    rest 8
+    spawn_cue CUE_LIVE_01
+    rest 4
+    beat_anim
+    no_op
+return
+
+
+@ Unused?
+script drum_live_pat35
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    rest 8
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    rest 4
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    rest 8
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    rest 4
+    beat_anim
+    no_op
+return
+
+
+@ Unused?
+script drum_live_pat36
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    rest 8
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    rest 4
+    spawn_cue CUE_LIVE_01
+    spawn_cue CUE_LIVE_01
+    rest 8
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    rest 4
+    beat_anim
+    no_op
+return
+
+
+@ Unused?
+script drum_live_pat37
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    rest 8
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    rest 4
+    spawn_cue CUE_LIVE_01
+    spawn_cue CUE_LIVE_01
+    rest 8
+    spawn_cue CUE_LIVE_01
+    rest 4
+    beat_anim
+    no_op
+return
+
+
+script drum_live_pat38
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    rest 8
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    rest 4
+    spawn_cue CUE_LIVE_01
+    spawn_cue CUE_LIVE_01
+    rest 8
+    spawn_cue CUE_LIVE_01
+    rest 4
+return
+
+
+@ Unused?
+script drum_live_pat39
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    spawn_cue CUE_LIVE_00
+    rest 8
+    spawn_cue CUE_LIVE_01
+    rest 4
+    spawn_cue CUE_LIVE_01
+    spawn_cue CUE_LIVE_01
+    rest 8
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    rest 4
+    beat_anim
+    no_op
+return
+
+
+@ Unused?
+script drum_live_pat40
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    rest 8
+    spawn_cue CUE_LIVE_01
+    rest 4
+    spawn_cue CUE_LIVE_01
+    rest 8
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    rest 4
+    beat_anim
+    no_op
+    spawn_cue CUE_LIVE_00
+    rest 8
+    spawn_cue CUE_LIVE_01
+    rest 4
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    rest 8
+    spawn_cue CUE_LIVE_01
+    rest 4
+    beat_anim
+    no_op
+return
+
+
+@ Unused?
+script drum_live_pat41
+    dml_clear_input_def
+    dml_define_cool_inputs 0, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_define_cool_inputs 1, (A_BUTTON | B_BUTTON | DPAD_LEFT | DPAD_DOWN)
+    dml_event05 3
+    spawn_cue CUE_LIVE_00
+    rest 8
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    rest 8
+    dml_event05 3
+    spawn_cue CUE_LIVE_01
+    rest 8
+    beat_anim
+    no_op
+return
+
+
+.end
