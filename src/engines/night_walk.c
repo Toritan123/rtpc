@@ -1076,6 +1076,22 @@ void night_walk_cue_check_for_fish(struct NightWalkCue *info) {
 }
 
 
+#ifdef PLATFORM_PC
+// RTPC_AUTO=4 (test aid): a player never jumps onto an electric fish --
+// the hit zaps Play-Yan (night_walk_cue_check_for_fish) and the walk ends,
+// while leaving it is no miss (night_walk_cue_miss ignores the result,
+// since a fish platform is never endOfBridge). The autoplay asks this to
+// leave such cues alone; RTPC_AUTO_PRESS_FISH=1 restores pressing them.
+#include <stdlib.h>
+int pc_autoplay_should_skip_night_walk_cue(struct Cue *cue) {
+    static int pressFish = -1;
+    if (pressFish < 0) pressFish = getenv("RTPC_AUTO_PRESS_FISH") != NULL;
+    if (pressFish || (cue->data.spawnFunc != (CueSpawnEvent)night_walk_cue_spawn)) return FALSE;
+    return ((struct NightWalkCue *)cue->gameCueInfo)->hasFish == TRUE;
+}
+#endif
+
+
 // Cue - Hit
 void night_walk_cue_hit(struct Cue *cue, struct NightWalkCue *info, u32 pressed, u32 released) {
     s32 starWandObtained = FALSE;
