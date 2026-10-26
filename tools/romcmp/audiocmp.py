@@ -29,7 +29,10 @@ def main():
     assert r1 == r2, 'sample rates differ'
     rate = r1
     a = pc.mean(axis=1); b = rom.mean(axis=1)
-    ea = np.log(envelope(a, rate)); eb = np.log(envelope(b, rate))
+    # The +300 floor (~-40 dBFS) keeps silence -- night_walk_2 opens with
+    # 7.7 s of it -- from deciding the lag: log(1e-9) noise matched against
+    # noise picked a lag 40 ms off and halved the correlation.
+    ea = np.log(envelope(a, rate) + 300); eb = np.log(envelope(b, rate) + 300)
     ea -= ea.mean(); eb -= eb.mean()
     # lag in 10 ms steps: positive = PC is ahead (starts earlier)
     def score(L):
@@ -50,6 +53,24 @@ def main():
     corr = np.corrcoef(e1, e2)[0, 1]
     print('lag %+.3f s (PC ahead), compared %.1f s, gain PC/ROM %.3f, envelope correlation %.4f'
           % (lag / rate, n / rate, gain, corr))
+    # Local lag in 5 s windows: a step means the timing moved mid-recording
+    # (the ROM spends a few extra frames loading the next scene, e.g. the
+    # results screen), and one overall lag then lowers the correlation on
+    # both sides of the step. Report each stretch's correlation separately.
+    e1l, e2l = np.log(e1 + 300), np.log(e2 + 300)
+    W, prev, segs = 500, None, []
+    for s0 in range(0, len(e2l) - W, 250):
+        y = e2l[s0:s0 + W]
+        c, o = max((np.corrcoef(e1l[s0 + o:s0 + o + W], y)[0, 1], o) for o in range(-20, 21)
+                   if 0 <= s0 + o and s0 + o + W <= len(e1l))
+        if c < 0.8:
+            continue  # silence or a transition: no reliable local lag
+        if o != prev:
+            segs.append((s0 / 100, o * 10))
+        prev = o
+    if len(segs) > 1:
+        print('  timing moves: from ROM t, PC shifted by ms:',
+              ', '.join('%.1fs %+d' % x for x in segs))
     # stereo balance
     for ch, nm in ((0, 'L'), (1, 'R')):
         print('  %s rms PC %.0f ROM %.0f' % (nm, np.sqrt((a2[:, ch] ** 2).mean()), np.sqrt((b2[:, ch] ** 2).mean())))

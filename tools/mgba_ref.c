@@ -66,6 +66,13 @@ static void save_ppm(const char *path, const color_t *buf, unsigned w, unsigned 
     fclose(f);
 }
 
+// MGBA_REF_CLOCK logs the script clock every 20 frames; set
+// MGBA_REF_CLOCK_EVERY=N to log every N frames (1 = every frame).
+static int clock_every(void) {
+    const char *e = getenv("MGBA_REF_CLOCK_EVERY");
+    return e && atoi(e) > 0 ? atoi(e) : 20;
+}
+
 int main(int argc, char **argv)
 {
     if (argc < 6) {
@@ -221,7 +228,7 @@ int main(int argc, char **argv)
                 fprintf(stderr, "scene frames start at %d, epoch %d\n", f0, epoch);
             }
         }
-        if (getenv("MGBA_REF_CLOCK") && f0 >= 0 && ((f - f0) % 20) == 0) {
+        if (getenv("MGBA_REF_CLOCK") && f0 >= 0 && ((f - f0) % clock_every()) == 0) {
             fprintf(stderr, "[CLOCK] rel %d clock %d delta %d bpm %d speed %d\n", f - f0,
                     (int32_t)core->busRead32(core, SCRIPT_CLOCK), (int32_t)core->busRead32(core, 0x030053d4),
                     core->busRead16(core, 0x030053cc), core->busRead16(core, 0x030053ce));
