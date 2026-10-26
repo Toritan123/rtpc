@@ -969,6 +969,11 @@ void gameplay_update_all_cues(void) {
                 if (cue->unk48_b0 || cue->hasExpired || (buttons == 0)) {
                     continue;
                 }
+                // Cues a good player leaves alone (Night Walk's electric fish).
+                {
+                    extern int pc_autoplay_should_skip_night_walk_cue(struct Cue *cue);
+                    if (pc_autoplay_should_skip_night_walk_cue(cue)) continue;
+                }
                 // Prefer a button the game currently accepts: ninja_bodyguard
                 // takes A or the D-Pad, but alternates which one is open.
                 open = buttons & ((filter & 0x8000) ? gGameplay->buttonReleaseFilter : gGameplay->buttonPressFilter);
