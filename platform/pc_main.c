@@ -53,6 +53,10 @@ int main(int argc, char *argv[])
     rtpc_sram_load();   // restore the save, if there is one
 
     midi_globals_init();
+    {   // pc-enhanced: replacement sample files (and RTPC_SAMPLE_EXPORT)
+        extern void pc_samples_init(void);
+        pc_samples_init();
+    }
     gfx_data_init_sizes();  // set rleSize on all CompressedData objects
 
     if (platform_init() != 0) {

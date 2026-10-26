@@ -1,9 +1,11 @@
 #ifdef PLATFORM_PC
 #include "input.h"
 #include "gba_mem.h"
+#include "pc_settings.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 // GBA REG_KEY offset inside IO array
 #define IO_KEY 0x130
@@ -87,16 +89,98 @@ void pc_autoplay_set_hold(unsigned buttons, int holdFrames)
     s_autoplay_idle = 0;
 }
 
+// pc-enhanced: keyboard and gamepad bindings come from settings.ini
+// (key_<button> / pad_<button>, comma-separated SDL names; see
+// platform/pc_settings.c for the defaults). Bit i of REG_KEY is button i.
+#define MAX_BIND 6
+#define MAX_PADS 4
+#define AXIS_PRESS 16000   // half travel, for triggers and the stick
+static const char *const kButtonNames[10] = {
+    "a", "b", "select", "start", "right", "left", "up", "down", "r", "l",
+};
+static SDL_Scancode s_keys[10][MAX_BIND];
+static int s_nkeys[10];
+static struct { int is_axis, id; } s_padbind[10][MAX_BIND];
+static int s_npad[10];
+static int s_pad_stick;
+static SDL_GameController *s_pads[MAX_PADS];
+
+static void parse_bindings(void)
+{
+    for (int b = 0; b < 10; b++) {
+        char name[16], list[128], *tok, *save;
+        snprintf(name, sizeof(name), "key_%s", kButtonNames[b]);
+        snprintf(list, sizeof(list), "%s", pc_settings_get(name));
+        s_nkeys[b] = 0;
+        for (tok = strtok_r(list, ",", &save); tok && s_nkeys[b] < MAX_BIND; tok = strtok_r(NULL, ",", &save)) {
+            SDL_Scancode sc;
+            while (*tok == ' ') tok++;
+            sc = SDL_GetScancodeFromName(tok);
+            if (sc != SDL_SCANCODE_UNKNOWN) s_keys[b][s_nkeys[b]++] = sc;
+            else fprintf(stderr, "[INPUT] %s: unknown key name \"%s\"\n", name, tok);
+        }
+        snprintf(name, sizeof(name), "pad_%s", kButtonNames[b]);
+        snprintf(list, sizeof(list), "%s", pc_settings_get(name));
+        s_npad[b] = 0;
+        for (tok = strtok_r(list, ",", &save); tok && s_npad[b] < MAX_BIND; tok = strtok_r(NULL, ",", &save)) {
+            SDL_GameControllerButton btn;
+            SDL_GameControllerAxis axis;
+            while (*tok == ' ') tok++;
+            btn = SDL_GameControllerGetButtonFromString(tok);
+            axis = SDL_GameControllerGetAxisFromString(tok);
+            if (btn != SDL_CONTROLLER_BUTTON_INVALID) {
+                s_padbind[b][s_npad[b]].is_axis = 0; s_padbind[b][s_npad[b]++].id = btn;
+            } else if (axis != SDL_CONTROLLER_AXIS_INVALID) {
+                s_padbind[b][s_npad[b]].is_axis = 1; s_padbind[b][s_npad[b]++].id = axis;
+            } else {
+                fprintf(stderr, "[INPUT] %s: unknown pad name \"%s\"\n", name, tok);
+            }
+        }
+    }
+    s_pad_stick = atoi(pc_settings_get("pad_stick")) != 0;
+    if (getenv("RTPC_INPUT_DUMP")) {   // test aid: show the parsed bindings
+        for (int b = 0; b < 10; b++) {
+            fprintf(stderr, "[INPUT] %-6s keys", kButtonNames[b]);
+            for (int k = 0; k < s_nkeys[b]; k++) fprintf(stderr, " %s", SDL_GetScancodeName(s_keys[b][k]));
+            fprintf(stderr, "  pad");
+            for (int k = 0; k < s_npad[b]; k++)
+                fprintf(stderr, " %s", s_padbind[b][k].is_axis
+                        ? SDL_GameControllerGetStringForAxis(s_padbind[b][k].id)
+                        : SDL_GameControllerGetStringForButton(s_padbind[b][k].id));
+            fprintf(stderr, "\n");
+        }
+    }
+}
+
 void input_init(void)
 {
     // All buttons released → REG_KEY = 0x03FF
     *(volatile uint16_t *)(gba_io + IO_KEY) = 0x03FF;
+    parse_bindings();
 }
 
 int input_handle_event(const SDL_Event *ev)
 {
     if (ev->type == SDL_QUIT) return 1;
     if (ev->type == SDL_KEYDOWN && ev->key.keysym.sym == SDLK_ESCAPE) return 1;
+    // SDL sends CONTROLLERDEVICEADDED for pads already plugged in at start
+    // too, so this is the only place pads are opened.
+    if (ev->type == SDL_CONTROLLERDEVICEADDED) {
+        for (int i = 0; i < MAX_PADS; i++) {
+            if (!s_pads[i]) {
+                s_pads[i] = SDL_GameControllerOpen(ev->cdevice.which);
+                if (s_pads[i]) fprintf(stderr, "[INPUT] gamepad: %s\n", SDL_GameControllerName(s_pads[i]));
+                break;
+            }
+        }
+    } else if (ev->type == SDL_CONTROLLERDEVICEREMOVED) {
+        for (int i = 0; i < MAX_PADS; i++) {
+            if (s_pads[i] && SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(s_pads[i])) == ev->cdevice.which) {
+                SDL_GameControllerClose(s_pads[i]);
+                s_pads[i] = NULL;
+            }
+        }
+    }
     return 0;
 }
 
@@ -105,21 +189,32 @@ void input_update_reg_key(void)
     const uint8_t *ks = SDL_GetKeyboardState(NULL);
     uint16_t reg = 0x03FF; // start with all released
 
-    // Keyboard mapping
-    //   K / J     → A / B
-    //   W A S D   → D-pad (arrow keys also work)
-    //   Q / E     → L / R shoulder
-    //   Enter     → START,  Backspace → SELECT
-    if (ks[SDL_SCANCODE_K])          reg &= ~GBA_A;
-    if (ks[SDL_SCANCODE_J])          reg &= ~GBA_B;
-    if (ks[SDL_SCANCODE_BACKSPACE])  reg &= ~GBA_SELECT;
-    if (ks[SDL_SCANCODE_RETURN])     reg &= ~GBA_START;
-    if (ks[SDL_SCANCODE_D] || ks[SDL_SCANCODE_RIGHT]) reg &= ~GBA_RIGHT;
-    if (ks[SDL_SCANCODE_A] || ks[SDL_SCANCODE_LEFT])  reg &= ~GBA_LEFT;
-    if (ks[SDL_SCANCODE_W] || ks[SDL_SCANCODE_UP])    reg &= ~GBA_UP;
-    if (ks[SDL_SCANCODE_S] || ks[SDL_SCANCODE_DOWN])  reg &= ~GBA_DOWN;
-    if (ks[SDL_SCANCODE_E])          reg &= ~GBA_R;
-    if (ks[SDL_SCANCODE_Q])          reg &= ~GBA_L;
+    for (int b = 0; b < 10; b++) {
+        int down = 0;
+        for (int k = 0; k < s_nkeys[b] && !down; k++) down = ks[s_keys[b][k]];
+        for (int p = 0; p < MAX_PADS && !down; p++) {
+            if (!s_pads[p]) continue;
+            for (int k = 0; k < s_npad[b] && !down; k++) {
+                if (s_padbind[b][k].is_axis)
+                    down = SDL_GameControllerGetAxis(s_pads[p], s_padbind[b][k].id) > AXIS_PRESS;
+                else
+                    down = SDL_GameControllerGetButton(s_pads[p], s_padbind[b][k].id);
+            }
+        }
+        if (down) reg &= ~(1u << b);
+    }
+    if (s_pad_stick) {
+        for (int p = 0; p < MAX_PADS; p++) {
+            int x, y;
+            if (!s_pads[p]) continue;
+            x = SDL_GameControllerGetAxis(s_pads[p], SDL_CONTROLLER_AXIS_LEFTX);
+            y = SDL_GameControllerGetAxis(s_pads[p], SDL_CONTROLLER_AXIS_LEFTY);
+            if (x >  AXIS_PRESS) reg &= ~GBA_RIGHT;
+            if (x < -AXIS_PRESS) reg &= ~GBA_LEFT;
+            if (y >  AXIS_PRESS) reg &= ~GBA_DOWN;
+            if (y < -AXIS_PRESS) reg &= ~GBA_UP;
+        }
+    }
 
     // TEMP (RTPC_AUTO=1): tap A every 30 frames — walks the menus and then
     // hammers cues during gameplay so the hit-detection path gets exercised.

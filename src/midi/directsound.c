@@ -122,6 +122,12 @@ void midi_sampler_load(u32 id, struct SampleData *sample) {
     baseKeySampleRate = gMidiDMASampleRate * baseKeyFrequency;
     sampleRate = (u64)sample->sampleRate << 28;
     stream->rate = (sampleRate + baseKeySampleRate - 1) / baseKeySampleRate;
+#ifdef PLATFORM_PC
+    {   // pc-enhanced: a replacement sample file, if there is one
+        extern void pc_sampler_loaded(u32 id, const struct SampleData *sample);
+        pc_sampler_loaded(id, sample);
+    }
+#endif
 }
 
 

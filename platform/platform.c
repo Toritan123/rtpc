@@ -1,5 +1,6 @@
 #ifdef PLATFORM_PC
 #include "platform.h"
+#include "pc_settings.h"
 #include "save_pc.h"
 #include "ppu.h"
 #include "input.h"
@@ -9,6 +10,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 // Target frame duration: 1/59.7275 s ≈ 16742 µs (GBA refresh rate)
 #define FRAME_US 16742u
@@ -27,6 +29,47 @@ static int           s_headless = 0;
 volatile int gPlatformVBlankFlag = 0;
 
 
+static void apply_scale(void)
+{
+    SDL_RenderSetIntegerScale(s_renderer, strcmp(pc_settings_get("scale"), "fit") ? SDL_TRUE : SDL_FALSE);
+}
+
+static void set_fullscreen(int on)
+{
+    // Desktop fullscreen: no mode change, so switching is instant and the
+    // display keeps its refresh rate (the frame pacing does not depend on it).
+    if (SDL_SetWindowFullscreen(s_win, on ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0) != 0) {
+        fprintf(stderr, "[PLATFORM] fullscreen: %s\n", SDL_GetError());
+        return;
+    }
+    SDL_ShowCursor(on ? SDL_DISABLE : SDL_ENABLE);
+}
+
+// F6 spatial mode, F7 scaling, F11 / Alt+Enter fullscreen. Returns 1 if handled.
+static int handle_window_key(const SDL_KeyboardEvent *k)
+{
+    if (k->keysym.sym == SDLK_F11
+     || (k->keysym.sym == SDLK_RETURN && (k->keysym.mod & KMOD_ALT))) {
+        int on = !(SDL_GetWindowFlags(s_win) & SDL_WINDOW_FULLSCREEN_DESKTOP);
+        set_fullscreen(on);
+        pc_settings_set("fullscreen", on ? "1" : "0");
+        return 1;
+    }
+    if (k->keysym.sym == SDLK_F6) {
+        extern void spatial_pc_reconfigure(void);
+        const char *m = pc_settings_get("spatial");
+        pc_settings_set("spatial", !strcmp(m, "off") ? "headphones" : !strcmp(m, "headphones") ? "wide" : "off");
+        spatial_pc_reconfigure();
+        return 1;
+    }
+    if (k->keysym.sym == SDLK_F7) {
+        pc_settings_set("scale", strcmp(pc_settings_get("scale"), "fit") ? "fit" : "integer");
+        apply_scale();
+        return 1;
+    }
+    return 0;
+}
+
 int platform_init(void)
 {
     {
@@ -39,6 +82,7 @@ int platform_init(void)
             fprintf(stderr, "SDL_Init: %s\n", SDL_GetError());
             return -1;
         }
+        pc_settings_init();
         input_init();
         audio_pc_init_dump_only();   // RTPC_AUDIO_DUMP still records, no device
         fprintf(stderr, "[PLATFORM] headless: no window, renderer or audio\n");
@@ -51,12 +95,13 @@ int platform_init(void)
         fprintf(stderr, "SDL_Init: %s\n", SDL_GetError());
         return -1;
     }
+    pc_settings_init();
 
     s_win = SDL_CreateWindow(
         "Rhythm Tengoku – PC Port",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         240 * GBA_SCALE, 160 * GBA_SCALE,
-        SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+        SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
     if (!s_win) {
         fprintf(stderr, "SDL_CreateWindow: %s\n", SDL_GetError());
         return -1;
@@ -80,9 +125,13 @@ int platform_init(void)
     // non-bundled, terminal-launched binary, so this is the whole fix needed.
     SDL_RaiseWindow(s_win);
 
-    // Keep integer scaling so pixels stay sharp
+    // Logical 240x160 output, nearest-neighbour. pc-enhanced: whole-number
+    // scaling (sharp, even pixels, borders around) or the largest fit that
+    // keeps the 3:2 shape (scale=fit), and optional fullscreen.
     SDL_RenderSetLogicalSize(s_renderer, 240, 160);
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0"); // nearest-neighbour
+    apply_scale();
+    if (atoi(pc_settings_get("fullscreen"))) set_fullscreen(1);
 
     if (ppu_init(s_renderer) != 0) {
         fprintf(stderr, "ppu_init failed: %s\n", SDL_GetError());
@@ -90,6 +139,7 @@ int platform_init(void)
     }
 
     input_init();
+    SDL_SetWindowTitle(s_win, pc_settings_title());
 
     if (audio_pc_init() != 0) {
         fprintf(stderr, "audio_pc_init failed (no audio): %s\n", SDL_GetError());
@@ -103,6 +153,15 @@ int platform_init(void)
 void platform_destroy(void)
 {
     rtpc_sram_flush();
+
+    {   // The automatic judge offset follows the measured audio latency.
+        static int shown = -999;
+        pc_settings_frame();
+        if (s_win && pc_judge_offset_frames() != shown) {
+            shown = pc_judge_offset_frames();
+            SDL_SetWindowTitle(s_win, pc_settings_title());
+        }
+    }
     if (s_headless) { SDL_Quit(); return; }
     audio_pc_destroy();
     ppu_destroy();
@@ -117,6 +176,11 @@ int platform_poll_events(void)
     while (SDL_PollEvent(&ev)) {
         if (ev.type == SDL_WINDOWEVENT && getenv("RTPC_WINLOG")) {
             fprintf(stderr, "[WIN] t=%llu event %d\n", (unsigned long long)SDL_GetTicks64(), ev.window.event);
+        }
+        if (ev.type == SDL_KEYDOWN && !ev.key.repeat && s_win
+         && (handle_window_key(&ev.key) || pc_settings_handle_key(ev.key.keysym.sym))) {
+            if (s_win) SDL_SetWindowTitle(s_win, pc_settings_title());
+            continue;
         }
         if (input_handle_event(&ev)) return 1;
     }

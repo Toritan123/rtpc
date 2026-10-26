@@ -94,13 +94,19 @@ extern void midi_dsp_init_sample_table(void);
 // where no amount of output-side filtering can remove it.  Pitch is preserved
 // automatically: midi_sampler_set_sample derives the per-stream step from
 // gMidiDMASampleRate, so doubling the rate halves the step.
+//
+// pc-enhanced: with audio_quality=high the default is 3 (40137 Hz,
+// everything up to 20 kHz kept; audio_quality=gba keeps 1),
+// with the reverb and EQ poles rescaled so they keep the GBA's corners
+// (platform/midi_dsp.c). RTPC_MIX_MULT=1 restores the GBA's own rate.
 u32 gPcMixMult = 1;
 
 void midi_globals_init(void)
 {
     {
         const char *e = getenv("RTPC_MIX_MULT");
-        int m = e ? atoi(e) : 1;
+        extern int pc_audio_hq(void);
+        int m = e ? atoi(e) : (pc_audio_hq() ? 3 : 1);
         if (m == 2 || m == 3 || m == 4) gPcMixMult = (u32)m;
     }
     gMidiDMASampleRate   = 13379 * gPcMixMult;

@@ -25,6 +25,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 
 #define PSG_REG(off) (*(volatile u16 *)(gba_io + (off)))
 
@@ -152,10 +153,31 @@ static void square_update_regs(struct PsgSquare *c, int env_reg, int freq_reg,
     c->prev_freq_reg = (u16)freq_reg;
 }
 
-/* Render `frames` stereo samples and ADD them into out[] (interleaved s16).
- * dt is one sample's duration in seconds. */
-void psg_pc_render(int16_t *out, unsigned frames, int sample_rate)
+/* audio_quality=high: band-limited steps (PolyBLEP). Every level change of
+ * a channel -- duty-pattern edge, wave-RAM step, LFSR step -- is a
+ * discontinuity that the naive synthesis turns into aliases folded across
+ * the whole band (the harsh edge on every square-wave note). The 2-sample
+ * polynomial residual of an ideal band-limited step, added around each one
+ * at its exact sub-sample time, removes most of them. Since the sample
+ * before the step needs a correction too, output runs one sample late. */
+static double s_blep_cur_l, s_blep_cur_r, s_blep_prev_l, s_blep_prev_r;
+static double s_prev_l, s_prev_r;
+
+/* A step of size d (in channel units) at fraction u (0..1) of the interval
+ * between the previous output sample and the current one. */
+static inline void blep(double d, double u, int left, int right)
 {
+    double after = -0.5 * d * u * u, before = 0.5 * d * (1.0 - u) * (1.0 - u);
+    if (left)  { s_blep_cur_l += after; s_blep_prev_l += before; }
+    if (right) { s_blep_cur_r += after; s_blep_prev_r += before; }
+}
+
+/* Render `frames` stereo samples and ADD them into out[] (interleaved,
+ * s16 scale, not clipped). dt is one sample's duration in seconds. */
+void psg_pc_render(float *out, unsigned frames, int sample_rate)
+{
+    extern int pc_audio_hq(void);
+    int hq = pc_audio_hq();
     unsigned i;
     double dt = 1.0 / (double)sample_rate;
     int snd_l = PSG_REG(R_SNDCNT_L);
@@ -273,6 +295,7 @@ void psg_pc_render(int16_t *out, unsigned frames, int sample_rate)
     for (i = 0; i < frames; i++) {
         double l = 0.0, r = 0.0;
         int ch;
+        s_blep_cur_l = s_blep_cur_r = 0.0;
 
         for (ch = 0; ch < 2; ch++) {
             struct PsgSquare *c = &s_sq[ch];
@@ -307,6 +330,19 @@ void psg_pc_render(int16_t *out, unsigned frames, int sample_rate)
             if (sq_freq[ch] >= 2048) continue;
             f = PSG_SQUARE_HZ(sq_freq[ch]);
             duty = (ch == 0 ? (PSG_REG(R_S1CNT_H) >> 6) : (PSG_REG(R_S2CNT_L) >> 6)) & 0x3;
+            if (hq && f * dt < 0.5) {
+                // Walk the eighth-period boundaries crossed this sample.
+                double inc = f * dt, p0 = c->phase * 8.0, p1 = p0 + inc * 8.0, b;
+                double vol = c->volume / 15.0;
+                int lev = kDuty[duty][(int)p0 & 7];
+                for (b = floor(p0) + 1.0; b <= p1; b += 1.0) {
+                    int nl = kDuty[duty][(int)b & 7];
+                    if (nl != lev)
+                        blep((nl - lev) * 2.0 * vol, (b - p0) / (inc * 8.0),
+                             snd_l & (1 << (8 + ch)), snd_l & (1 << (12 + ch)));
+                    lev = nl;
+                }
+            }
             c->phase += f * dt;
             c->phase -= (double)(long)c->phase;
             step = (int)(c->phase * 8.0) & 7;
@@ -323,6 +359,20 @@ void psg_pc_render(int16_t *out, unsigned frames, int sample_rate)
             if (s_wave.length_on) {
                 s_wave.length_left -= dt;
                 if (s_wave.length_left <= 0.0) s_wave.on = 0;
+            }
+            if (hq && PSG_WAVE_HZ(wave_freq) * dt < 0.5) {
+                double inc = PSG_WAVE_HZ(wave_freq) / 32.0 * dt;
+                double p0 = s_wave.phase * 32.0, p1 = p0 + inc * 32.0, b;
+                double sc = 1.0 / 8.0 / (double)(1 << s_wave.volume_shift);
+                int i0 = (int)p0 & 31;
+                int lev = (i0 & 1) ? (wram[i0 >> 1] & 0xF) : (wram[i0 >> 1] >> 4);
+                for (b = floor(p0) + 1.0; b <= p1; b += 1.0) {
+                    int ix = (int)b & 31;
+                    int nl = (ix & 1) ? (wram[ix >> 1] & 0xF) : (wram[ix >> 1] >> 4);
+                    if (nl != lev)
+                        blep((nl - lev) * sc, (b - p0) / (inc * 32.0), snd_l & (1 << 10), snd_l & (1 << 14));
+                    lev = nl;
+                }
             }
             s_wave.phase += PSG_WAVE_HZ(wave_freq) / 32.0 * dt;
             s_wave.phase -= (double)(long)s_wave.phase;
@@ -348,14 +398,26 @@ void psg_pc_render(int16_t *out, unsigned frames, int sample_rate)
                     if (s_noise.volume > 15) s_noise.volume = 15;
                 }
             }
-            s_noise.phase_acc += dt;
-            while (s_noise.period > 0.0 && s_noise.phase_acc >= s_noise.period) {
+            {
+                // Band-limit LFSR steps only while they are slower than the
+                // output rate; faster noise is broadband anyway.
+                int bl = hq && s_noise.period > dt;
+                double acc0 = s_noise.phase_acc;
+                s_noise.phase_acc += dt;
+                while (s_noise.period > 0.0 && s_noise.phase_acc >= s_noise.period) {
                 u16 x;
+                int old = s_noise.out;
+                double u = (s_noise.period - acc0) / dt;
                 s_noise.phase_acc -= s_noise.period;
+                acc0 -= s_noise.period;
                 x = (u16)((s_noise.lfsr ^ (s_noise.lfsr >> 1)) & 1);
                 s_noise.lfsr >>= 1;
                 s_noise.lfsr |= (u16)(x << (s_noise.width7 ? 6 : 14));
                 s_noise.out = !(s_noise.lfsr & 1);
+                if (bl && s_noise.out != old)
+                    blep((s_noise.out - old) * 2.0 * (s_noise.volume / 15.0), u < 0 ? 0 : u > 1 ? 1 : u,
+                         snd_l & (1 << 11), snd_l & (1 << 15));
+                }
             }
             amp = (s_noise.out ? 1.0 : -1.0) * (s_noise.volume / 15.0);
             if (snd_l & (1 << 11)) l += amp;
@@ -367,18 +429,18 @@ void psg_pc_render(int16_t *out, unsigned frames, int sample_rate)
         // (This was 0.18, an unjustified safety margin picked before the
         // master limiter existed; combined with the uninitialised 25 % output
         // ratio it left PSG notes about 15 dB below where they belong.)
+        if (hq) {
+            // Emit the previous sample with its corrections; hold this one.
+            double pl = s_prev_l + s_blep_prev_l, pr = s_prev_r + s_blep_prev_r;
+            s_prev_l = l + s_blep_cur_l;
+            s_prev_r = r + s_blep_cur_r;
+            s_blep_prev_l = s_blep_prev_r = 0.0;
+            l = pl; r = pr;
+        }
         l *= master * vol_l * 0.25 * s_psg_gain;
         r *= master * vol_r * 0.25 * s_psg_gain;
-        {
-            int sl = out[i * 2 + 0] + (int)(l * 32767.0);
-            int sr = out[i * 2 + 1] + (int)(r * 32767.0);
-            if (sl >  32767) sl =  32767;
-            if (sl < -32768) sl = -32768;
-            if (sr >  32767) sr =  32767;
-            if (sr < -32768) sr = -32768;
-            out[i * 2 + 0] = (int16_t)sl;
-            out[i * 2 + 1] = (int16_t)sr;
-        }
+        out[i * 2 + 0] += (float)(l * 32767.0);
+        out[i * 2 + 1] += (float)(r * 32767.0);
     }
 }
 

@@ -1,10 +1,12 @@
 #ifdef PLATFORM_PC
 #include "audio_pc.h"
+#include "pc_settings.h"
 #include <SDL2/SDL.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <math.h>
 #include <string.h>
+#include <stdlib.h>
 
 // The MIDI library exposes these globals (defined in src/midi/directsound.c).
 // They are volatile u32 arrays of 8-bit samples packed 4 per word.
@@ -87,6 +89,10 @@ static void dump_header(void)
 }
 
 static SDL_AudioDeviceID s_dev  = 0;
+static double s_device_ms = 0.0;   // the device's own buffer, as latency
+static int    s_low_latency = 0;
+static double s_target_ms = 30.0;  // SDL queue depth the rate matcher aims at
+static unsigned long s_push_count = 0;
 uint32_t s_underruns = 0;   // times the SDL queue was empty at push time
 static uint32_t s_drops = 0;   // frames of audio discarded by the queue cap
 static uint32_t          s_last_write_pos = 0;
@@ -111,9 +117,13 @@ static inline int16_t s8_to_s16(uint8_t s8)
 // as the packed 8-bit ring and the same clip/wrap curve, but without the 8-bit
 // quantisation step.  Set RTPC_AUDIO_8BIT=1 to fall back to the packed ring for
 // an A/B comparison.
-extern int16_t  gPcPcmHiR[];
-extern int16_t  gPcPcmHiL[];
+// pc-enhanced: the tap holds the raw accumulator; pc_hires_gba() applies the
+// GBA's wrap/clamp, audio_quality=high reads it linearly (x * 2, no clip).
+extern int32_t  gPcPcmHiR[];
+extern int32_t  gPcPcmHiL[];
 extern uint32_t gPcPcmHiValid;
+extern int16_t  pc_hires_gba(int32_t x);
+static int s_hq = -1;
 
 static int s_use_hires = -1;
 static int s_zoh = 0;
@@ -148,7 +158,7 @@ static double  s_volume      = -1.0;  // master gain, RTPC_VOLUME/100
 
 static float    s_rs_tab[RS_HALF * RS_PHASES + 2];
 static int      s_rs_ready = 0;
-static int16_t  s_hist_l[RS_HIST], s_hist_r[RS_HIST];
+static float    s_hist_l[RS_HIST], s_hist_r[RS_HIST];
 static uint64_t s_hist_w = 0;      /* total input samples ever appended */
 static double   s_rs_pos = 0.0;    /* absolute input position of next output */
 static int      s_linear = -1;
@@ -209,15 +219,20 @@ static inline void rs_weights(double frac, float *w)
 // Fetch sample `idx` (counted from `base` in words) from whichever source is
 // active, as a pair of s16.
 static inline void fetch_sample(uint32_t base, uint32_t buf_size, uint32_t idx,
-                                int16_t *l, int16_t *r)
+                                float *l, float *r)
 {
     uint32_t word   = (base + idx / 4) % buf_size;
     uint32_t byte_n = idx & 3;
 
     if (s_use_hires) {
         uint32_t hi = word * 4 + byte_n;
-        *l = gPcPcmHiL[hi];
-        *r = gPcPcmHiR[hi];
+        if (s_hq) {
+            *l = (float)gPcPcmHiL[hi] * 2.0f;
+            *r = (float)gPcPcmHiR[hi] * 2.0f;
+        } else {
+            *l = pc_hires_gba(gPcPcmHiL[hi]);
+            *r = pc_hires_gba(gPcPcmHiR[hi]);
+        }
     } else {
         *l = s8_to_s16((uint8_t)(gMidiPCMBufL[word] >> (byte_n * 8)));
         *r = s8_to_s16((uint8_t)(gMidiPCMBufR[word] >> (byte_n * 8)));
@@ -238,6 +253,16 @@ int audio_pc_init(void)
     // it buys ~9 ms with no measured underrun risk.  RTPC_AUDIO_BUF overrides
     // it; 256 is worth trying by ear on a fast machine.
     want.samples  = 512;
+    // pc-enhanced: audio_latency=low (the default there) starts with a
+    // 256-frame device buffer and a 20 ms queue target, and adds 4 ms to the
+    // target at each underrun after start-up (audio_pc_push_frame), so a
+    // machine that cannot keep up settles at the depth it needs instead of
+    // crackling. normal = main's 512 frames / 30 ms.
+    s_low_latency = strcmp(pc_settings_get("audio_latency"), "normal") != 0;
+    if (s_low_latency) {
+        want.samples = 256;
+        s_target_ms  = 20.0;
+    }
     {
         const char *e = getenv("RTPC_AUDIO_BUF");
         if (e) {
@@ -249,6 +274,7 @@ int audio_pc_init(void)
 
     s_dev = SDL_OpenAudioDevice(NULL, 0, &want, &got, 0);
     if (s_dev == 0) return -1;
+    s_device_ms = got.freq ? got.samples * 1000.0 / got.freq : 0.0;
 
     // Prime the queue with silence before starting playback.  Every underrun
     // measured after the production fix landed in the first four seconds, while
@@ -327,6 +353,11 @@ double audio_pc_queued_ms(void)
          / ((double)PC_SAMPLE_RATE * 2.0 * sizeof(int16_t));
 }
 
+double audio_pc_device_ms(void)
+{
+    return s_dev ? s_device_ms : 0.0;
+}
+
 void audio_pc_destroy(void)
 {
     dump_close();
@@ -386,11 +417,19 @@ void audio_pc_push_frame(void)
     // If there is already ≥ 200 ms of audio queued, skip pushing this frame.
     // This caps latency and prevents unbounded queue growth when the game
     // temporarily runs faster than real-time (initial burst, turbo, etc.).
+    s_push_count++;
     if (s_dev && SDL_GetQueuedAudioSize(s_dev) == 0) {
         // The device ran dry before this push: an audible gap.
         s_underruns++;
         if (getenv("RTPC_AUDIO_STATS"))
             fprintf(stderr, "[AUD] underrun #%u\n", s_underruns);
+        // Low-latency mode: a gap after the first 5 s (boot frames are slow
+        // and the priming cushion covers them) means the target is too
+        // shallow for this machine; deepen it for good.
+        if (s_low_latency && s_push_count > 300 && s_target_ms < 60.0) {
+            s_target_ms += 4.0;
+            fprintf(stderr, "[AUD] underrun: queue target now %.0f ms\n", s_target_ms);
+        }
     }
     if (s_dev && SDL_GetQueuedAudioSize(s_dev) >= MAX_QUEUE_BYTES) {
         // Dropping a frame of audio outright is also a discontinuity; count it
@@ -414,8 +453,11 @@ void audio_pc_push_frame(void)
     // controller is allowed.
     uint32_t max_out = (uint32_t)((double)gba_samples * PC_SAMPLE_RATE
                                   / (GBA_SAMPLE_RATE * 0.86)) + 8;
+    // Float until the very end, so nothing clips between stages: the
+    // high-quality mix can exceed full scale and is soft-limited last.
+    float   *fo  = (float *)SDL_malloc(max_out * 2 * sizeof(float));
     int16_t *out = (int16_t *)SDL_malloc(max_out * 2 * sizeof(int16_t));
-    if (!out) return;
+    if (!out || !fo) { SDL_free(out); SDL_free(fo); return; }
 
     uint32_t out_count = 0;
 
@@ -436,7 +478,7 @@ void audio_pc_push_frame(void)
     // clock offset, and keep every gain small enough that the ratio — which is
     // pitch — moves over seconds.  Reacting per frame to a queue quantised by
     // the device's buffer size is what produced an audible vibrato before.
-    double target_ms = 30.0;
+    double target_ms = s_target_ms;
     {
         const char *e = getenv("RTPC_AUDIO_TARGET");
         if (e) { double v = atof(e); if (v >= 5.0 && v <= 200.0) target_ms = v; }
@@ -489,6 +531,7 @@ void audio_pc_push_frame(void)
         const char *z = getenv("RTPC_AUDIO_ZOH");
         s_use_hires = (gPcPcmHiValid != 0) && !(e && atoi(e));
         s_zoh = (z && atoi(z)) ? 1 : 0;   // reproduce the old zero-order hold
+        s_hq = pc_audio_hq();
     }
 
     // 13379 Hz -> 44100 Hz is a 3.3x upsample.  Taking the nearest source
@@ -555,10 +598,8 @@ void audio_pc_push_frame(void)
             accr = sr;
         }
 
-        out[out_count * 2 + 0] = (int16_t)(accl >  32767.0 ?  32767.0 :
-                                           accl < -32768.0 ? -32768.0 : accl);
-        out[out_count * 2 + 1] = (int16_t)(accr >  32767.0 ?  32767.0 :
-                                           accr < -32768.0 ? -32768.0 : accr);
+        fo[out_count * 2 + 0] = (float)accl;
+        fo[out_count * 2 + 1] = (float)accr;
         out_count++;
         s_rs_pos += step;
     }
@@ -589,12 +630,27 @@ void audio_pc_push_frame(void)
         if (s_volume > 8.0)  s_volume = 8.0;
     }
 
+    // audio_quality=high: the DirectSound mix goes through a modern reverb
+    // (platform/reverb_pc.c) in place of the GBA's echo, at the game's own
+    // reverb level. The PSG is added after it, as it never fed the GBA's.
+    if (s_hq && out_count > 0) {
+        extern void reverb_pc_process(float *buf, unsigned frames, int sample_rate);
+        reverb_pc_process(fo, out_count, PC_SAMPLE_RATE);
+    }
+
     // Mix in the PSG channels.  They are synthesised at the output rate rather
     // than the GBA's 13379 Hz DirectSound rate — there is no reason to band-limit
     // them to that, and it keeps them out of the resampler.
     if (out_count > 0) {
-        extern void psg_pc_render(int16_t *out, unsigned frames, int sample_rate);
-        psg_pc_render(out, out_count, PC_SAMPLE_RATE);
+        extern void psg_pc_render(float *out, unsigned frames, int sample_rate);
+        psg_pc_render(fo, out_count, PC_SAMPLE_RATE);
+    }
+
+    // pc-enhanced: optional virtual speakers / stereo widening
+    // (platform/spatial_pc.c, settings.ini `spatial`, F6), on everything.
+    if (out_count > 0) {
+        extern void spatial_pc_process(float *buf, unsigned frames, int sample_rate);
+        spatial_pc_process(fo, out_count, PC_SAMPLE_RATE);
     }
 
     // AC coupling. The GBA's analogue output passes through a series
@@ -611,25 +667,54 @@ void audio_pc_push_frame(void)
         uint32_t n;
         if (keep_dc < 0) { const char *e = getenv("RTPC_AUDIO_DC"); keep_dc = (e && atoi(e)) ? 1 : 0; }
         for (n = 0; !keep_dc && n < out_count; n++) {
-            double l = out[2 * n], r = out[2 * n + 1];
+            double l = fo[2 * n], r = fo[2 * n + 1];
             yl = l - xl + R * yl; xl = l;
             yr = r - xr + R * yr; xr = r;
-            out[2 * n]     = (int16_t)(yl > 32767.0 ? 32767.0 : (yl < -32768.0 ? -32768.0 : yl));
-            out[2 * n + 1] = (int16_t)(yr > 32767.0 ? 32767.0 : (yr < -32768.0 ? -32768.0 : yr));
+            fo[2 * n]     = (float)yl;
+            fo[2 * n + 1] = (float)yr;
         }
     }
 
-    if (s_volume != 1.0) {
+    if (s_hq) {
+        // A peak limiter instead of the GBA's clipping: the gain drops at
+        // once to keep the peak under -0.5 dBFS and recovers over ~150 ms,
+        // so a loud passage gets quieter for a moment instead of distorted.
+        // The tanh stage only catches what the instant attack lets through.
+        static double gain = 1.0;
+        const double ceiling = 32767.0 * 0.944;
+        const double rel = 1.0 - exp(-1.0 / (0.150 * PC_SAMPLE_RATE));
+        const double knee = 32767.0 * 0.9, lim = 32767.0 - knee;
+        uint32_t n;
+        for (n = 0; n < out_count; n++) {
+            double l = fo[2 * n] * s_volume, r = fo[2 * n + 1] * s_volume;
+            double pk = fabs(l) > fabs(r) ? fabs(l) : fabs(r);
+            double want = pk * gain > ceiling ? ceiling / pk : 1.0;
+            int c;
+            gain = want < gain ? want : gain + (1.0 - gain) * rel;
+            l *= gain; r *= gain;
+            for (c = 0; c < 2; c++) {
+                double v = c ? r : l, a = fabs(v);
+                if (a > knee) v = (v < 0 ? -1 : 1) * (knee + lim * tanh((a - knee) / lim));
+                out[2 * n + c] = (int16_t)lrint(v);
+            }
+        }
+    } else if (s_volume != 1.0) {
         const double knee = 32767.0 * 0.8;
         const double lim  = 32767.0 - knee;
         uint32_t n;
         for (n = 0; n < out_count * 2; n++) {
-            double v = (double)out[n] * s_volume;
+            double v = (double)fo[n] * s_volume;
             double a = v < 0.0 ? -v : v;
             if (a > knee) {
                 a = knee + lim * tanh((a - knee) / lim);
                 v = (v < 0.0) ? -a : a;
             }
+            out[n] = (int16_t)(v > 32767.0 ? 32767.0 : (v < -32768.0 ? -32768.0 : v));
+        }
+    } else {
+        uint32_t n;
+        for (n = 0; n < out_count * 2; n++) {
+            double v = fo[n];
             out[n] = (int16_t)(v > 32767.0 ? 32767.0 : (v < -32768.0 ? -32768.0 : v));
         }
     }
@@ -647,6 +732,7 @@ void audio_pc_push_frame(void)
         }
     }
     SDL_free(out);
+    SDL_free(fo);
 }
 
 #endif // PLATFORM_PC

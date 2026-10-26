@@ -5,6 +5,7 @@
 #include "src/midi/midi.h"
 #include "src/scenes/game_select.h"
 #include "src/scenes/results.h"
+#include "platform/pc_settings.h"
 #endif
 
 #ifdef PLATFORM_PC
@@ -875,6 +876,11 @@ void gameplay_update_cue(struct Cue *cue) {
         missTimeOffset = cueDef->missWindowLate;
     }
     if (!cue->unk48_b0 && !cue->hasExpired) {
+#ifdef PLATFORM_PC
+        // pc-enhanced: a late press is judged pc_judge_offset_frames()
+        // earlier, so keep the cue open that much longer.
+        missTimeOffset += pc_judge_offset_frames();
+#endif
         if (cue->runningTime > cue->duration + missTimeOffset) {
             cue->hasExpired = TRUE;
             PC_CUE_TRACE("miss filter=%04x t=%d/%d\n", cue->data.buttonFilter, cue->runningTime, cue->duration);
@@ -1037,6 +1043,11 @@ s32 gameplay_calculate_input_timing(struct Cue *cue, u16 pressed, u16 released, 
 
     runningTime = cue->runningTime;
     duration = cue->duration;
+#ifdef PLATFORM_PC
+    // pc-enhanced: judge the press as if it came pc_judge_offset_frames()
+    // earlier, to cancel the PC's extra audio latency (platform/pc_settings.c).
+    runningTime -= pc_judge_offset_frames();
+#endif
 
     if (cueDef->tempoDependent) { // Used by the Rhythm Test, Mr. Upbeat, and the unused drumming tutorials.
         hitEarly = ticks_to_frames(cueDef->hitWindowEarly);

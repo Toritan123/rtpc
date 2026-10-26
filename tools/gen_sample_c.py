@@ -105,6 +105,15 @@ def main():
         lines.append('};')
         lines.append('')
     
+    # PC: every SampleData in table order, so platform/sample_replace.c can
+    # find sample_NNN by number (replacement files, export).
+    lines.append('struct SampleData *const gPcSampleTable[] = {')
+    for entry in samples:
+        lines.append(f'    &{entry["sample"].split(".")[0]}_data,')
+    lines.append('};')
+    lines.append(f'const unsigned gPcSampleCount = {len(samples)};')
+    lines.append('')
+
     with open(output_c, 'w') as f:
         f.write('\n'.join(lines) + '\n')
     
