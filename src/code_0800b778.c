@@ -319,9 +319,14 @@ void update_active_beatscript_scene(void) {
 int pc_script_clock(void) {
     // RTPC_CLOCKLOG=1: also print the clock and tempo state every 20 calls
     // (once per frame), in the format of mgba_ref's MGBA_REF_CLOCK.
-    static int log = -1, n;
-    if (log < 0) log = getenv("RTPC_CLOCKLOG") != NULL;
-    if (log && (n++ % 20) == 0) {
+    // RTPC_CLOCKLOG_EVERY=N changes the interval (1 = every frame).
+    static int log = -1, n, every = 20;
+    if (log < 0) {
+        log = getenv("RTPC_CLOCKLOG") != NULL;
+        if (getenv("RTPC_CLOCKLOG_EVERY") && atoi(getenv("RTPC_CLOCKLOG_EVERY")) > 0)
+            every = atoi(getenv("RTPC_CLOCKLOG_EVERY"));
+    }
+    if (log && (n++ % every) == 0) {
         fprintf(stderr, "[CLOCK] f %d clock %d delta %d bpm %d speed %d\n", n - 1, D_030053c0.runningTime,
                 D_030053c0.deltaTime, D_030053c0.scriptBPM, D_030053c0.scriptSpeed);
     }
